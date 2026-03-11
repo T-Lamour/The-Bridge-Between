@@ -39,4 +39,4 @@ The lab runs inside VMware Workstation Pro using an internal network within a VL
 
 - Infrastructure monitoring with Grafana & Prometheus
 - Compliance CIS Benchmarks with Wazuh Security Configuration Assessment (SCA) to evaluate endpoint configurations against CIS Benchmark standards
-- curity dashboard metrics such as mean-time-to-detect and mean-time-to-respond 
+- Security dashboard metrics such as mean-time-to-detect and mean-time-to-respond 
