@@ -25,8 +25,8 @@ The lab runs inside VMware Workstation Pro using an internal network within a VL
 | Kali | 10.10.1.50 | Security operations |
 | Wazuh | 10.10.1.51 | SIEM |
 | DFIR IRIS | 10.10.1.52 | Case Management |
-| N8N | 10.10.1.53 | Automation |
-| MISP | 10.10.1.54 | Threa Intel |
+| N8N | 10.10.1.53 | SOAR |
+| MISP | 10.10.1.54 | Threa Intelligence |
 
 ## Features
 
