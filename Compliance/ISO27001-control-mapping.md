@@ -6,7 +6,7 @@ This document outlines how the lab aligns with selected controls from **ISO/IEC 
 
 The purpose of this mapping is to demonstrate how commonly used open-source security tools can support security controls aligned with ISO 27001 best practices.
 
-The environment simulates a small **SOC** capable of monitoring, detecting, and responding to security incidents.
+The environment simulates a **SOC** capable of monitoring, detecting, and responding to security incidents.
 
 This mapping is intended for **educational and portfolio purposes** and does not represent a formally certified ISO 27001 ISMS.
 
@@ -109,7 +109,7 @@ The following controls are demonstrated through the architecture of this project
 | Control | Control Name | Implementation |
 |-------|---------------|---------------|
 | A.8.9 | Configuration management | Baseline configurations defined for firewall, SIEM, and automation systems |
-| A.8.15 | Logging | Security logs collected and centralised through Wazuh |
+| A.8.15 | Logging | Security logs collected and centralised through Wazuh Indexer d|
 | A.8.16 | Monitoring activities | Wazuh base and custom rules detect suspicious activity and generate alerts |
 | A.8.20 | Network security | pfSense firewall enforces network segmentation and traffic filtering |
 | A.8.23 | Web filtering | Firewall policies restrict unauthorised outbound traffic |
@@ -118,8 +118,6 @@ The following controls are demonstrated through the architecture of this project
 ---
 
 # Threat Intelligence Integration
-
-Threat intelligence plays a key role in security monitoring and investigation within the environment.
 
 **MISP (Malware Information Sharing Platform)** is deployed as the internal threat intelligence repository and provides:
 
@@ -150,9 +148,6 @@ Detection rules identify suspicious activity such as:
 - suspicious network behaviour
 - integrity monitoring alerts
 
-### Threat Intelligence Enrichment
-
-Security alerts can be enriched using **MISP**, allowing analysts to correlate events with known indicators of compromise.
 
 ### Incident Management
 

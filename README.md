@@ -1,4 +1,4 @@
-# The Bridge Between SOC Homelab
+# Bridge Between
 
 This project simulates a security architecture for SME environments. The goal is to design and document a complete security operations 
 ecosystem using open-source tools that can align with ISO 27001 operational security principles. 
@@ -37,9 +37,9 @@ The lab runs inside VMware Workstation Pro using an internal network within a VL
 
 ## Future Implementation
 
-- Infrastructure monitoring with Grafana & Prometheus
+- Infrastructure monitoring with metrics and dashboards with Grafana & Prometheus
 - Compliance CIS Benchmarks with Wazuh Security Configuration Assessment (SCA) to evaluate endpoint configurations against CIS Benchmark standards
-- Security dashboard metrics such as mean-time-to-detect and mean-time-to-respond 
+- Security dashboard metrics such as mean-time-to-detect (MTTD) and mean-time-to-respond (MTTR)
 - Endpoint network isolation automatition
 - Automated IOC ingestion into MISP
 - Wazuh active response & MISP integration to automatically 
