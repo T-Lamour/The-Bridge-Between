@@ -1,41 +1,40 @@
-# Bridge Between
+# The Bridge Between
 
-This project simulates a security architecture for SME environments. The goal is to design and document a complete security operations 
-ecosystem using open-source tools that can align with ISO 27001 operational security principles. 
+Cybersecurity has a bit of an identity crisis. 
 
-The environment simulates a mid-sized organization and demonstrates how security monitoring, threat intelligence, incident response, vulnerability management, and configuration compliance work together.
+One side you've got enterprise companies running full-scale SOCs with tools costing more than a deposit on a house. Then on the other side, you've got small to medium sized businesses thinking "we've got antivirus running, so we should be fine...right?"
 
-## Stack
+Somewhere in between those two worlds is a massive gap, and this project exists to fill it. The Bridge Between is exactly what it sounds like - a way to get from "no real security" to "actually decent security" without needing a ridiculous budget.
 
-- pfSense – Firewall
-- Microsoft Entra ID – Identity and access management 
+## How Much Money Can Be Saved?
+
+I've once saw a quote from an MSSP that offered a "SIEM Solution", which was basically a bundle of outdated, vulnerable open-source tools that was lightly stitched together. No innovation, no real engineering, just "That will be £15,000 a month please."
+
+Meanwhile, this project runs on:
+
+£0 in licensing. Zero.
+
+Everything here runs entirely on free tooling, and it's not the "free tier but actually useless" free tooling, but an actual security stack. The only real cost is theinfrastructure and your time.
+
+## The Stack
+
 - Wazuh – SIEM, XDR, Vulnerability Detection
 - DFIR IRIS – Incident Case Management
 - N8N – SOAR Automation
-- MISP – Threat Intelligence Databse
-- Grafana & Prometheus – Infrastructure monitoring dashboards (planned) 
+- MISP – Threat Intelligence Database
+- pfSense - Firewall, netowkr control and segmentation
 
-## Architecture
-
-The lab runs inside VMware Workstation Pro using an internal network within a VLAN.
-
-| System | IP | Purpose |
-|------|------|------|
-| pfSense | 10.10.1.254 | Firewall |
-| Kali | 10.10.1.50 | Security operations |
-| Wazuh | 10.10.1.51 | SIEM |
-| DFIR IRIS | 10.10.1.52 | Case Management |
-| N8N | 10.10.1.53 | SOAR |
-| MISP | 10.10.1.54 | Threa Intelligence |
 
 ## Features
 
-- Automated SIEM alert enrichment
-- Incident response playbooks
-- ISO27001 control mapping
-- Threat intelligence integration
+- Detection & Visibility
+- Automation
+- Threat Intelligence Enrichment
+- Incident Response
 
 ## Future Implementation
+
+Security is always evolving, so there are always improvements to this project:
 
 - Infrastructure monitoring with metrics and dashboards with Grafana & Prometheus
 - Compliance CIS Benchmarks with Wazuh Security Configuration Assessment (SCA) to evaluate endpoint configurations against CIS Benchmark standards
