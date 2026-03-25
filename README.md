@@ -1,4 +1,4 @@
-# The Bridge Between SOC Homelab
+# Bridge Between
 
 This project simulates a security architecture for SME environments. The goal is to design and document a complete security operations 
 ecosystem using open-source tools that can align with ISO 27001 operational security principles. 
@@ -12,30 +12,20 @@ The environment simulates a mid-sized organization and demonstrates how security
 - Wazuh – SIEM, XDR, Vulnerability Detection
 - DFIR IRIS – Incident Case Management
 - N8N – SOAR Automation
-- MISP – Threat Intelligence Databse
-- Grafana & Prometheus – Infrastructure monitoring dashboards (planned) 
+- MISP – Threat Intelligence Database
+- pfSense - Firewall, netowkr control and segmentation
 
-## Architecture
-
-The lab runs inside VMware Workstation Pro using an internal network within a VLAN.
-
-| System | IP | Purpose |
-|------|------|------|
-| pfSense | 10.10.1.254 | Firewall |
-| Kali | 10.10.1.50 | Security operations |
-| Wazuh | 10.10.1.51 | SIEM |
-| DFIR IRIS | 10.10.1.52 | Case Management |
-| N8N | 10.10.1.53 | SOAR |
-| MISP | 10.10.1.54 | Threa Intelligence |
 
 ## Features
 
-- Automated SIEM alert enrichment
-- Incident response playbooks
-- ISO27001 control mapping
-- Threat intelligence integration
+- Detection & Visibility
+- Automation
+- Threat Intelligence Enrichment
+- Incident Response
 
 ## Future Implementation
+
+Security is always evolving, so there are always improvements to this project:
 
 - Infrastructure monitoring with Grafana & Prometheus
 - Compliance CIS Benchmarks with Wazuh Security Configuration Assessment (SCA) to evaluate endpoint configurations against CIS Benchmark standards
