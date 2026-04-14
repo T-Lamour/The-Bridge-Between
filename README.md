@@ -2,13 +2,13 @@
 
 ## The Vision🎯
 
-There are enterprise companies running full-scale SOCs with tools costing more than a deposit on a house. Then on the other side, you've got small to medium sized businesses thinking "we've got antivirus running, so we should be fine...right?"
+There are enterprise companies running full-scale Security Operations Centres (SOC) with tools costing more than a deposit on a house. Then on the other side, you've got small to medium sized businesses thinking "we've got antivirus running, so we should be fine...right?"
 
 Somewhere in between those two worlds is a massive gap, and this project exists to show you that you can fill it. The Bridge Between is exactly what it sounds like - a way to get from "no real security" to "actually decent security" without needing a ridiculous budget.
 
- **So What is it then?**
+ **So What Is It then?**
 
-This project is a **Security Operations Centre (SOC)** built entirely using free and open-source tools. It’s not just a collection of tools thrown together and left to suffer — it’s a **working security pipeline**.
+This project is a SOC built entirely using **free open-source tools**. It’s not just a collection of tools thrown together and left to suffer — it’s a working security pipeline.
 
 Logs are collected, suspicious activity is detected, alerts are enriched with threat intelligence, and incidents are created and tracked properly. Instead of alerts sitting in a dashboard waiting to be ignored, they actually go somewhere and trigger action.
 
@@ -19,7 +19,8 @@ In simple terms for the muggles:
 
 The purpose of this is to show that:
 - You can build a **functional, realistic SOC environment**
-- You can automate large parts of the investigation process
+- You can automate large parts of the investi
+gation process
 - You can respond to threats in a structured way  
 - You can do all of that **whilst still having money left to actually spend**
 
