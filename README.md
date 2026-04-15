@@ -3,11 +3,9 @@
 ## The Vision🎯
 
 There are enterprise companies running full-scale <abbr title="A team that monitors and responds to security threats">Security Operations Centres (SOC)</abbr>
- with tools costing more than a deposit on a house. Then on the other side, you've got small to medium sized businesses thinking "we've got antivirus running, so we should be fine...right?"
+ with tools costing more than a deposit on a house. Then on the other side, you've got small to medium businesses rely on basic antivirus and hope for the best.
 
-Somewhere in between those two worlds is a massive gap, and this project exists to show you that you can build a bridge between. This project is a SOC built entirely using **free open-source tools**. It’s not just a collection of tools thrown together and left to suffer — it’s a working security pipeline.
-
-Logs are collected, suspicious activity is detected, alerts are enriched with threat intelligence, and incidents are created and tracked properly. Instead of alerts sitting in a dashboard waiting to be ignored, they actually go somewhere and trigger action.
+This project exists to bridge the gap between those two worlds, showing you can build a functional SOC using free, open-source tools. Logs are collected, suspicious activity is detected, alerts are enriched with threat intelligence, and incidents are created and tracked properly - instead of alerts sitting in a dashboard waiting to be ignored.
 
 In simple terms for the muggles:
 
