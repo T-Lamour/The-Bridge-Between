@@ -44,7 +44,7 @@ Instead of one expensive “do everything” platform, this project uses special
 <table>
   <tr>
     <td>
-      <img src="Architecture/SIEM-Solution.png" width="450">
+      <img src="Architecture/SIEM-Solution.png" width="850">
     </td>
     <td>
 
