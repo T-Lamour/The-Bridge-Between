@@ -2,17 +2,15 @@
 
 ## The Vision🎯
 
-There are enterprise companies running full-scale Security Operations Centres (SOC) with tools costing more than a deposit on a house. Then on the other side, you've got small to medium sized businesses thinking "we've got antivirus running, so we should be fine...right?"
+There are enterprise companies running full-scale <abbr title="A team that monitors and responds to security threats">Security Operations Centres (SOC)</abbr>
+ with tools costing more than a deposit on a house. Then on the other side, you've got small to medium sized businesses thinking "we've got antivirus running, so we should be fine...right?"
 
-Somewhere in between those two worlds is a massive gap, and this project exists to show you that you can fill it. The Bridge Between is exactly what it sounds like - a way to get from "no real security" to "actually decent security" without needing a ridiculous budget.
-
- **So What Is It then?**
-
-This project is a SOC built entirely using **free open-source tools**. It’s not just a collection of tools thrown together and left to suffer — it’s a working security pipeline.
+Somewhere in between those two worlds is a massive gap, and this project exists to show you that you can build a bridge between. This project is a SOC built entirely using **free open-source tools**. It’s not just a collection of tools thrown together and left to suffer — it’s a working security pipeline.
 
 Logs are collected, suspicious activity is detected, alerts are enriched with threat intelligence, and incidents are created and tracked properly. Instead of alerts sitting in a dashboard waiting to be ignored, they actually go somewhere and trigger action.
 
 In simple terms for the muggles:
+
 
 > It takes you from **“something might be wrong”**  
 > to **“here’s what’s wrong, why it matters, and what to do next.”**
@@ -24,14 +22,10 @@ gation process
 - You can respond to threats in a structured way  
 - You can do all of that **whilst still having money left to actually spend**
 
-It’s not pretending to replace high-end platforms.
-
-> It’s proving you don’t need them to get started.
-
 
 ## So? How Much 💸💸 Can I Save?
 
-I've once saw a quote from an MSSP that offered a "SIEM (Security Infomation and Event Management) Solution" - which was basically a bundle of outdated, vulnerable open-source tools that was lightly stitched together. No innovation, no real engineering, just straight up "That will be £15,000 a month please."
+I've once saw a quote from an MSSP that offered a "<abbr title="A system that collects and analyzes security logs in one place">SIEM (Security Infomation and Event Management)</abbr> Solution" - which was basically a bundle of outdated, vulnerable open-source tools that was lightly stitched together. No innovation, no real engineering, just straight up "That will be £15,000 a month please".
 
 | Solution Type             | Cost (Approx)      | What You Get                          |
 | ------------------------- | ------------------ | ------------------------------------- |
@@ -46,16 +40,6 @@ Everything here runs entirely on free tooling, and no, not the typicall "free ti
 
 Instead of one expensive “do everything” platform, this project uses specialised tools that actually do their job well.
 
-| Tool          | Role                                     |
-| ------------- | ---------------------------------------- |
-| **Wazuh**     | SIEM, XDR, vulnerability detection       |
-| **DFIR IRIS** | Incident response & case management      |
-| **n8n**       | SOAR                                     |
-| **MISP**      | Threat intelligence platform             |
-| **pfSense**   | Firewall, network control & segmentation |
-
-
-## Architecture Overview
 
 <table>
   <tr>
@@ -64,15 +48,14 @@ Instead of one expensive “do everything” platform, this project uses special
     </td>
     <td>
 
-**Flow Explained**
-
-| Stage | Purpose |
+| Tools | Purpose |
 |------|--------|
-| Wazuh Agent | Generates logs and events |
-| Wazuh | Collects logs, detects and alerts suspicious activity |
-| n8n | Automates enrichment and response workflows |
-| MISP | Adds context if malicious (is this IP actually bad?) |
-| DFIR IRIS | Case management |
+| **Wazuh** | SIEM, <abbr title="Extended Detection and Response">XDR</abbr>, vulnerability detection - Collects logs, detects and alerts suspicious activity |
+| **n8n** | <abbr title="A platform that automates security tasks and incident response">SOAR</abbr> - Automates enrichment and response workflows |
+| **MISP** | Threat intelligence platform  - Adds context if malicious (is this IP actually bad?) |
+| **DFIR IRIS** | Case management |
+| **pfSense**   | Firewall, network control & segmentation |
+
 
   </tr>
 </table>
