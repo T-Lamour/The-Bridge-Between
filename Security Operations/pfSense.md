@@ -1,6 +1,5 @@
 <p align="center">
-  <img src="Images/pfSense/logo.png
-.png" width="420"/>
+  <img src="Images/pfSense/logo.png" width="420"/>
 </p>
 
 ## Overview
