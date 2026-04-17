@@ -1,195 +1,205 @@
-# DFIR IRIS (Case Management & Incident Response)
+<p align="center">
+  <img src="Images/MISP/logo
+.png" width="220"/>
+</p>
 
 ## Overview
 
-DFIR IRIS is used as the **case management and incident response platform** within this SOC. It acts as the central location for tracking, investigating, and managing security incidents generated from alerts.
+MISP is used as the **threat intelligence platform** within this SOC. Its primary role is to act as a **centralised repository of Indicators of Compromise (IOCs)** that can be referenced during alert processing and investigations.
 
-Within this project, IRIS ensures that all security events are properly documented, investigated, and resolved in a structured and repeatable way.
+In this project, MISP is not used as a full threat-sharing platform, but rather as an **internal IOC database** to support detection, enrichment, and response.
 
 ---
 
 ## Key Responsibilities
 
-* Incident creation and tracking
-* Case management and organisation
-* Investigation workflow support
-* Evidence and artefact collection
-* Documentation of response actions
+* Store and manage Indicators of Compromise (IOCs)
+* Provide threat intelligence context during alert enrichment
+* Enable correlation between alerts and known malicious indicators
+* Support incident investigations with historical intelligence
 
 ---
 
 ## Architecture Role
 
-DFIR IRIS sits at the **end of the detection and enrichment pipeline**, where alerts become structured incidents:
+MISP is integrated into the SOC as a **reference point for enrichment**:
 
-```id="iris-flow"
+```id="misp-flow"
      Wazuh SIEM
- (Detection & Alerts)
+ (Alert Generation)
         │
         ▼
         n8n
- (Enrichment & Automation)
+ (Enrichment Engine)
+        │
+        ├──────────────► MISP (IOC Lookup)
         │
         ▼
     DFIR IRIS
- (Case Management)
+ (Incident Creation)
 ```
 
 ---
 
-## Incident Creation
+## IOC Management
 
-Incidents are automatically created in IRIS via **n8n workflows**.
+MISP stores a variety of indicators that can be referenced during alert processing.
 
-### Included Data:
+### Supported IOC Types:
 
-* Alert details from Wazuh
-* Enriched threat intelligence
-* Indicators (IP addresses, domains, hashes)
-* Event timeline and metadata
+* IP addresses
+* Domain names
+* URLs
+* File hashes (MD5, SHA256)
+* Email addresses
 
-This ensures analysts have all relevant context from the start.
+These indicators can originate from:
 
----
-
-## Case Structure
-
-Each incident in IRIS is structured to support efficient investigation:
-
-### Typical Case Includes:
-
-* **Title** – Summary of the incident (e.g. "Malicious Login Detected")
-* **Description** – Detailed context and alert information
-* **Severity Level** – Based on enrichment and detection logic
-* **Indicators of Compromise (IOCs)** – IPs, domains, hashes
-* **Tasks** – Investigation and response steps
-* **Comments** – Analyst notes and findings
+* Previous incidents
+* Threat intelligence feeds
+* Manual analyst input
 
 ---
 
-## Investigation Workflow
+## Enrichment Workflow
 
-IRIS supports a structured investigation process:
+MISP is queried during the **n8n enrichment phase**.
 
-1. **Triage**
+### Process:
 
-   * Review alert context and severity
-   * Determine if the alert is a true positive
+1. Alert received from Wazuh
+2. Extract indicators (e.g. source IP, URL, hash)
+3. Query MISP for matching IOCs
+4. Return context such as:
 
-2. **Analysis**
+   * Known malicious status
+   * Associated threat information
+   * Historical sightings
 
-   * Examine logs and enriched data
-   * Correlate with threat intelligence
-   * Identify scope and impact
+---
 
-3. **Containment**
+## Correlation & Detection
 
-   * Execute or verify response actions
-   * Prevent further malicious activity
+MISP enables correlation between:
 
-4. **Eradication & Recovery**
+* Current alerts
+* Previously identified threats
 
-   * Remove threats and restore systems
-   * Confirm environment is secure
+### Example:
 
-5. **Closure**
+* A login alert contains an IP address
+* n8n checks MISP
+* IP is already tagged as malicious
+* Alert severity is increased
+* Automated response is triggered
 
-   * Document findings
-   * Mark incident as resolved
-   * Retain for future reference
+This allows the SOC to react faster to **known threats**.
 
 ---
 
 ## Integration with SOC Workflow
 
-DFIR IRIS integrates with other tools in the environment:
+MISP integrates with:
 
-* **n8n** → creates and updates incidents automatically
-* **Wazuh** → provides original alert data
-* **MISP** → supplies threat intelligence for correlation
-* **Response Systems** → actions triggered via automation (pfSense, Microsoft Entra)
+* **n8n** → queried during enrichment workflows
+* **Wazuh** → indirectly supports detection through enriched context
+* **DFIR IRIS** → provides intelligence for investigations
 
-This ensures a seamless transition from detection to response.
+Additionally, new IOCs identified during incidents can be:
+
+* Added back into MISP
+* Reused for future detections
+
+---
+
+## Feedback Loop
+
+A key design feature is the **feedback loop**:
+
+1. Incident occurs
+2. Indicators are identified
+3. Indicators are stored in MISP
+4. Future alerts are enriched using these indicators
+
+This continuously improves detection and response over time.
 
 ---
 
 ## Example Interface
 
-### Case Dashboard
+### Event Overview
 
 *Add screenshot here*
 
 Displays:
 
-* Open and closed incidents
-* Severity distribution
-* Investigation status
+* Threat events and associated indicators
+* Tags and classifications
 
 ---
 
-### Incident Details
+### IOC Details
 
 *Add screenshot here*
 
 Shows:
 
-* Full alert context
-* Enriched data
-* Associated IOCs
+* Indicator type and value
+* Associated threat context
+* Related events
 
 ---
 
-### Task Management
+### Search & Correlation
 
 *Add screenshot here*
 
 Shows:
 
-* Investigation steps
-* Assigned actions
-* Progress tracking
+* Ability to search for indicators
+* Matches across historical data
 
 ---
 
 ## Key Benefits
 
-* Centralised incident tracking
-* Structured and repeatable investigation process
-* Improved visibility into security events
-* Supports collaboration and documentation
-* Aligns with real-world SOC workflows
+* Centralised IOC repository
+* Faster identification of known threats
+* Improves alert accuracy and prioritisation
+* Enables intelligence-driven response
+* Builds long-term threat visibility
 
 ---
 
 ## Limitations
 
-* Requires integration for full automation (via n8n)
-* Manual investigation still required for complex cases
-* UI and features may require familiarisation
+* Requires manual input or feeds to remain effective
+* Limited value without integration (handled via n8n)
+* Not used for external threat sharing in this project
 
 ---
 
 ## Design Approach
 
-The use of DFIR IRIS in this project follows key principles:
+MISP is used with a focused and practical approach:
 
-* **Automation-driven intake** – incidents created automatically from alerts
-* **Structured investigations** – consistent handling of all incidents
-* **Full visibility** – all actions and findings documented
-* **Scalability** – suitable for multiple clients or environments
+* **IOC-first usage** – prioritising indicators over complex threat modelling
+* **Tight integration with automation** – used during enrichment workflows
+* **Continuous improvement** – feeding new indicators back into the system
+* **Lightweight deployment** – avoiding unnecessary complexity
 
 ---
 
 ## Summary
 
-DFIR IRIS provides the **incident management backbone** of the SOC.
+MISP provides the **threat intelligence layer** of the SOC by acting as a central IOC database.
 
-It ensures that:
+It enables:
 
-* Alerts are not lost or ignored
-* Investigations follow a structured process
-* All actions are documented and auditable
+* Faster identification of malicious indicators
+* Improved alert enrichment and prioritisation
+* A feedback loop that strengthens detection over time
 
-This transforms raw alerts into fully managed security incidents.
+This ensures the SOC evolves and improves with each incident handled.
 
 ---

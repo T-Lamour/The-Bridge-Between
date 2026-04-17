@@ -1,4 +1,7 @@
-# DFIR IRIS (Case Management & Incident Response)
+<p align="center">
+  <img src="Images/Iris/logo
+.png" width="420"/>
+</p>
 
 ## Overview
 

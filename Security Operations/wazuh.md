@@ -1,5 +1,7 @@
-  <img src="Images/wazuh.png" width="120"/>
-
+<p align="center">
+  <img src="Images/Wazuh/logo
+.png" width="420"/>
+</p>
 
 ## Overview
 

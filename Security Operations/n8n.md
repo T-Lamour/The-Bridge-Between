@@ -1,4 +1,7 @@
-# n8n (Automation & SOAR)
+<p align="center">
+  <img src="Images/n8n/logo
+.png" width="420"/>
+</p>
 
 ## Overview
 
