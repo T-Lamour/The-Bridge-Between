@@ -1,193 +1,187 @@
-# ISO 27001 Compliance Mapping
+# ISO/IEC 27001 Mapping
 
 ## Overview
 
-This document outlines how the lab aligns with selected controls from **ISO/IEC 27001:2022**.
+ISO/IEC 27001 is an international standard for establishing, implementing, maintaining, and continuously improving an Information Security Management System (ISMS).
 
-The purpose of this mapping is to demonstrate how commonly used open-source security tools can support security controls aligned with ISO 27001 best practices.
-
-The environment simulates a **SOC** capable of monitoring, detecting, and responding to security incidents.
-
-This mapping is intended for **educational and portfolio purposes** and does not represent a formally certified ISO 27001 ISMS.
+In this project, ISO 27001 is used as a **design and mapping framework**, not as a formal certification. It helps demonstrate how the SOC architecture aligns with recognised security controls and best practices.
 
 ---
 
-# Project Architecture
+## Purpose in This Project
 
-The lab environment consists of the following security infrastructure:
+The purpose of mapping ISO 27001 to this SOC environment is to:
 
-| Component | Role |
-|----------|------|
-| VMware Workstation Pro | Virtualisation platform hosting infrastructure |
-| pfSense | Firewall and network security |
-| Kali Linux | Administrative Workstation |
-| Wazuh | SIEM, XDR, Vulnerability Detection |
-| DFIR IRIS | Incident response case management |
-| n8n | SOAR |
-| MISP | Theat Intelligence Platform and IOC Database |
-
-
-### Security Workflow
-
-Endpoint
-│
-▼
-Wazuh SIEM
-(Log collection & detection)
-│
-▼
-n8n
-(Automation & enrichment)
-│
-├── Threat intelligence lookup (MISP)
-│
-▼
-DFIR IRIS
-(Incident case creation)
-│
-▼
-SOC Investigation
-
-
-
-Threat intelligence lookups are performed against **MISP**, which acts as the internal IOC database used for enrichment of alerts and investigations.
+* Demonstrate security control alignment
+* Show structured risk-based thinking
+* Validate that the SOC design follows industry standards
+* Provide a compliance-aware security architecture
 
 ---
 
-# ISO 27001 Clauses
+## High-Level ISMS Alignment
 
-ISO 27001 defines requirements for establishing and maintaining an **Information Security Management System (ISMS)**.
+This SOC simulates key ISO 27001 principles:
 
-While this project does not implement a full organisational ISMS, several operational concepts from the standard are demonstrated.
-
-| Clause | Description | Implementation in Project |
-|------|-------------|---------------------------|
-| 6.1 | Risk management | Security considerations influence monitoring coverage, firewall rules, and alert workflows |
-| 7.2 | Competence | Skills developed through building and operating the SOC environment |
-| 7.5 | Documented information | Project documentation maintained in GitHub |
-| 8.1 | Operational control | Security monitoring processes implemented through SIEM and automation |
-| 9.1 | Monitoring and measurement | Alerts generated and investigated using Wazuh and IRIS |
-| 10.2 | Continual improvement | Detection rules and automation workflows refined based on investigations |
+* **Confidentiality** → Controlled access to systems and logs
+* **Integrity** → Log protection and alert validation via SIEM
+* **Availability** → Resilient monitoring and automation workflows
+* **Accountability** → Centralised logging and case management
 
 ---
 
-# Annex A Control Mapping
+## Control Mapping to SOC Components
 
-ISO 27001 Annex A defines recommended security controls.  
-The following controls are demonstrated through the architecture of this project.
+### 1. Logging & Monitoring (Annex A.8 / A.12)
 
----
+**Implemented via:**
 
-## A.5 – Organisational Controls
+* Wazuh SIEM
+* Suricata (pfSense IDS)
+* System and endpoint log collection
 
-| Control | Control Name | Implementation |
-|-------|---------------|---------------|
-| A.5.7 | Threat intelligence | MISP used as a threat intelligence platform for storing and querying indicators of compromise (IOCs) |
-| A.5.24 | Information security incident management | Security incidents tracked and investigated using DFIR IRIS |
+**Function:**
 
----
-
-## A.6 – People Controls
-
-| Control | Control Name | Implementation |
-|-------|---------------|---------------|
-| A.6.3 | Information security awareness | Continuous learning and practical lab operation improve security awareness and operational skills |
+* Continuous monitoring of security events
+* Centralised log aggregation
+* Detection of suspicious activity
 
 ---
 
-## A.7 – Physical Controls
+### 2. Access Control (Annex A.5 / A.9)
 
-| Control | Control Name | Implementation |
-|-------|---------------|---------------|
-| A.7.1 | Physical security perimeters | Infrastructure hosted within a controlled local environment |
-| A.7.9 | Security of assets off-premises | Virtual machines hosted and managed within VMware |
+**Implemented via:**
 
----
+* pfSense firewall rules
+* System-level user permissions
+* (Planned) Identity response via Microsoft Entra
 
-## A.8 – Technological Controls
+**Function:**
 
-| Control | Control Name | Implementation |
-|-------|---------------|---------------|
-| A.8.9 | Configuration management | Baseline configurations defined for firewall, SIEM, and automation systems |
-| A.8.15 | Logging | Security logs collected and centralised through Wazuh Indexer d|
-| A.8.16 | Monitoring activities | Wazuh base and custom rules detect suspicious activity and generate alerts |
-| A.8.20 | Network security | pfSense firewall enforces network segmentation and traffic filtering |
-| A.8.23 | Web filtering | Firewall policies restrict unauthorised outbound traffic |
-| A.8.28 | Secure coding | Automation workflows reviewed and tested before deployment |
+* Restricting network and system access
+* Enforcing least privilege principles
+* Preventing unauthorised access paths
 
 ---
 
-# Threat Intelligence Integration
+### 3. Incident Management (Annex A.5.24 / A.5.25)
 
-**MISP (Malware Information Sharing Platform)** is deployed as the internal threat intelligence repository and provides:
+**Implemented via:**
 
-- storage of indicators of compromise (IOCs)
-- threat intelligence correlation
-- enrichment of security alerts
-- support for incident investigations
+* DFIR IRIS case management system
+* n8n incident creation workflows
 
-Automation workflows within **n8n** can query MISP to determine whether an IP address, domain, or file hash has been previously identified as malicious.
+**Function:**
 
-This enrichment improves analyst visibility and supports faster incident triage.
-
----
-
-# Security Capabilities Demonstrated
-
-This environment demonstrates several practical SOC security capabilities aligned with ISO 27001 operational controls.
-
-### Centralised Logging
-
-Logs from monitored systems are collected and analysed using **Wazuh SIEM**.
-
-### Security Monitoring
-
-Detection rules identify suspicious activity such as:
-
-- authentication anomalies
-- suspicious network behaviour
-- integrity monitoring alerts
-
-
-### Incident Management
-
-Incidents are tracked using **DFIR IRIS**, allowing structured investigation and documentation.
-
-### Security Automation
-
-**n8n workflows** automate security tasks including:
-
-- alert enrichment
-- threat intelligence lookups
-- incident case creation
-
-### Network Security
-
-The **pfSense firewall** provides network segmentation, access control, and traffic filtering.
+* Structured incident tracking
+* Defined investigation workflow
+* Documentation of response actions
 
 ---
 
-# Limitations
+### 4. Threat Intelligence (Annex A.5.7)
 
-This project demonstrates **technical security controls aligned with ISO 27001 practices**, but it does not implement a full organisational ISMS.
+**Implemented via:**
 
-Elements not implemented include:
+* MISP (IOC database)
+* VirusTotal / AbuseIPDB integrations (via n8n)
 
-- formal governance structures
-- organisational risk management processes
-- management review cycles
+**Function:**
 
-The focus of this project is **technical security operations and SOC engineering**.
+* Enrichment of security alerts
+* Correlation of indicators of compromise
+* Improved detection accuracy
 
 ---
 
-# Future Improvements
+### 5. Network Security (Annex A.8 / A.13)
 
-Potential improvements include:
+**Implemented via:**
 
-- Endpoint network isolation automatition
-- automated IOC ingestion into MISP
-- Wazuh active response & MISP integration to automatically 
-- expanded threat intelligence correlation
-- automated containment workflows
-- improved alert correlation across multiple sources
+* pfSense firewall
+* Suricata IDS/IPS
+
+**Function:**
+
+* Network segmentation and traffic control
+* Detection of malicious network activity
+* Blocking of known threats
+
+---
+
+### 6. Security Automation (Operational Control Support)
+
+**Implemented via:**
+
+* n8n workflows
+
+**Function:**
+
+* Automated alert enrichment
+* Incident creation in IRIS
+* Triggering of response actions (blocking, escalation, logging)
+
+---
+
+## SOC Architecture as a Control System
+
+The SOC architecture directly supports ISO 27001 objectives:
+
+```text id="iso-flow"
+Detection → Wazuh + Suricata
+     │
+Enrichment → MISP + Threat Intel APIs
+     │
+Automation → n8n
+     │
+Incident Management → DFIR IRIS
+     │
+Network Enforcement → pfSense
+```
+
+---
+
+## Risk-Based Design Approach
+
+This SOC is designed around common security risks:
+
+| Risk                  | Control Implementation     |
+| --------------------- | -------------------------- |
+| Credential compromise | Login detection via Wazuh  |
+| Malware execution     | File / endpoint monitoring |
+| Network intrusion     | Suricata IDS               |
+| Lateral movement      | Log correlation + alerting |
+| Data exposure         | Firewall segmentation      |
+
+---
+
+## Continuous Improvement (ISO Principle)
+
+The architecture supports continuous improvement through:
+
+* Feedback loops via incident investigations
+* IOC enrichment added back into MISP
+* Refinement of Wazuh detection rules
+* Automation workflow updates in n8n
+
+This mirrors the ISO 27001 requirement for ongoing system improvement.
+
+---
+
+## Limitations
+
+This implementation is:
+
+* A **conceptual mapping**, not a certified ISMS
+* Focused on technical controls rather than full governance
+* Missing formal policy and audit documentation layers
+
+---
+
+## Summary
+
+This SOC environment demonstrates alignment with ISO/IEC 27001 by implementing core technical controls across detection, response, access control, and threat intelligence.
+
+While not formally certified, the architecture reflects key principles of an Information Security Management System (ISMS) through a practical, automated security operations workflow.
+
+---
