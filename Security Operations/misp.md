@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Images/MISP/logo
+  <img src="Images/MISP/logo.png
 .png" width="220"/>
 </p>
 

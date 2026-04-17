@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Images/Wazuh/logo
+  <img src="Images/Wazuh/logo.png
 .png" width="420"/>
 </p>
 

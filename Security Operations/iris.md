@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Images/Iris/logo
+  <img src="Images/Iris/logo.png
 .png" width="420"/>
 </p>
 
