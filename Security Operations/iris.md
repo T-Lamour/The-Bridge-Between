@@ -8,6 +8,10 @@ DFIR IRIS is used as the **case management and incident response platform** with
 
 Within this project, IRIS ensures that all security events are properly documented, investigated, and resolved in a structured and repeatable way.
 
+<p align="center">
+  <img src="Images/Iris/overview.png" width="420"/>
+</p>
+
 ---
 
 ## Key Responsibilities
@@ -115,44 +119,6 @@ This ensures a seamless transition from detection to response.
 
 ---
 
-## Example Interface
-
-### Case Dashboard
-
-*Add screenshot here*
-
-Displays:
-
-* Open and closed incidents
-* Severity distribution
-* Investigation status
-
----
-
-### Incident Details
-
-*Add screenshot here*
-
-Shows:
-
-* Full alert context
-* Enriched data
-* Associated IOCs
-
----
-
-### Task Management
-
-*Add screenshot here*
-
-Shows:
-
-* Investigation steps
-* Assigned actions
-* Progress tracking
-
----
-
 ## Key Benefits
 
 * Centralised incident tracking
@@ -184,14 +150,6 @@ The use of DFIR IRIS in this project follows key principles:
 
 ## Summary
 
-DFIR IRIS provides the **incident management backbone** of the SOC.
-
-It ensures that:
-
-* Alerts are not lost or ignored
-* Investigations follow a structured process
-* All actions are documented and auditable
-
-This transforms raw alerts into fully managed security incidents.
+DFIR IRIS provides the **incident management backbone** of the SOC. It ensures that investigations follow a structured process, and all actions are documented and auditable
 
 ---

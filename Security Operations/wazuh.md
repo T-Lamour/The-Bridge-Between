@@ -8,6 +8,10 @@ Wazuh is the core **SIEM** platform used in this SOC. It is responsible for coll
 
 Within this project, Wazuh acts as the **primary detection engine**, identifying suspicious or malicious activity in real time.
 
+<p align="center">
+  <img src="Images/Wazuh/Wazuh overview.png" width="420"/>
+</p>
+
 ---
 
 ## Key Responsibilities
@@ -44,6 +48,10 @@ All incoming security data flows through Wazuh before being processed further.
 
 Wazuh agents are deployed on monitored systems to forward logs to the Wazuh server.
 
+<p align="center">
+  <img src="Images/Wazuh/Wazuh discover.png" width="620"/>
+</p>
+
 ### Data Sources Include:
 
 * System logs (Linux / Windows)
@@ -75,22 +83,6 @@ Custom rules can be created to align with:
 
 ---
 
-## Alerting
-
-When suspicious activity is detected:
-
-* Wazuh generates an alert with severity levels
-* Alerts include key metadata:
-
-  * Source IP
-  * Username
-  * Event type
-  * Timestamp
-
-These alerts are forwarded to **n8n via webhook** for further processing and automation.
-
----
-
 ## Integration with SOC Workflow
 
 Wazuh integrates with other components as follows:
@@ -100,44 +92,6 @@ Wazuh integrates with other components as follows:
 * **MISP** → used for threat intelligence correlation (via workflows)
 
 This enables a fully automated detection-to-response pipeline.
-
----
-
-## Example Interface
-
-### Dashboard Overview
-
-*Add screenshot here*
-
-This view provides:
-
-* High-level alert trends
-* Active agents
-* Security event summaries
-
----
-
-### Alert Investigation
-
-*Add screenshot here*
-
-This view shows:
-
-* Detailed alert data
-* Rule triggered
-* Log source and context
-
----
-
-### Agent Management
-
-*Add screenshot here*
-
-This view allows:
-
-* Monitoring of connected endpoints
-* Agent health and status
-* Deployment visibility
 
 ---
 
