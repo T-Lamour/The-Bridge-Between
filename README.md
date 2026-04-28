@@ -24,12 +24,9 @@ Enterprise SOCs run on six-figure tooling. SMBs run on antivirus and hope for th
 
 ## Architecture
 
-<table>
-  <tr>
-    <td>
-      <img src="Architecture/SIEM-Solution.png" width="850">
-    </td>
-    <td>
+<p align="center">
+  <img src="Architecture/SIEM-Solution.png" width="850" alt="SOC Architecture">
+</p>
 
 | Tool | Role | Why |
 | ---- | ---- | --- |
@@ -38,10 +35,6 @@ Enterprise SOCs run on six-figure tooling. SMBs run on antivirus and hope for th
 | n8n | SOAR automation | Self-hosted, code-optional workflow engine; integrates with every tool via REST |
 | MISP | Threat intelligence | Internal IOC database with feed ingestion; every confirmed indicator feeds future detections |
 | DFIR IRIS | Case management | Structured incident tracking from triage to closure, with timeline, assets, and IOC links |
-
-
-  </tr>
-</table>
 
 Each tool runs as a Docker Compose stack on its own VM. Reasoning: [Deployment/00-prerequisites.md](Deployment/00-prerequisites.md).
 
