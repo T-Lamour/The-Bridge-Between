@@ -2,7 +2,7 @@
 
 ## Scenario Overview
 
-An internal endpoint begins generating unusual outbound network traffic — making periodic beaconing connections to an external IP on a non-standard port. pfSense's Suricata IDS detects the pattern, logs are forwarded to Wazuh, and the automated pipeline identifies a likely Command and Control (C2) connection, blocks the traffic, and creates an incident for analyst investigation.
+An internal endpoint begins generating unusual outbound network traffic — making periodic beaconing connections to an external IP on a non-standard port. OPNsense's Suricata IDS detects the pattern, logs are forwarded to Wazuh, and the automated pipeline identifies a likely Command and Control (C2) connection, blocks the traffic, and creates an incident for analyst investigation.
 
 ---
 
@@ -30,7 +30,7 @@ The endpoint has been compromised — likely via the malicious file download des
 
 Detection occurs at two points in the pipeline simultaneously.
 
-### Detection Point A — pfSense (Suricata IDS)
+### Detection Point A — OPNsense (Suricata IDS)
 
 Suricata's ruleset fires on the combination of known-malicious destination IP and the use of port 4444 (a well-known Metasploit default listener port).
 
@@ -46,13 +46,13 @@ alert tcp $HOME_NET any -> $EXTERNAL_NET 4444 (
 )
 ```
 
-pfSense logs the event and forwards it to Wazuh via syslog.
+OPNsense logs the event and forwards it to Wazuh via syslog.
 
 ---
 
 ### Detection Point B — Wazuh
 
-Wazuh correlates the pfSense Suricata alert with internal network logs and fires its own rule.
+Wazuh correlates the OPNsense Suricata alert with internal network logs and fires its own rule.
 
 #### Rule Triggered
 
@@ -79,7 +79,7 @@ Wazuh correlates the pfSense Suricata alert with internal network logs and fires
   },
   "agent": {
     "id": "001",
-    "name": "pfSense-Firewall",
+    "name": "OPNsense-Firewall",
     "ip": "10.0.0.1"
   },
   "data": {
@@ -205,36 +205,36 @@ n8n evaluates the enriched data:
 
 ---
 
-## Stage 3 — Response Actions (n8n → pfSense / Microsoft Entra)
+## Stage 3 — Response Actions (n8n → OPNsense / Microsoft Entra)
 
-### Action 1 — Emergency IP Block via pfSense
+### Action 1 — Emergency IP Block via OPNsense
 
-n8n calls the pfSense API to immediately block the C2 IP, terminating the active session:
+n8n calls the OPNsense API to immediately block the C2 IP, terminating the active session:
 
 ```
-POST /api/v1/firewall/alias/entry
+POST /api/firewall/alias/addHost/blocklist_dynamic
 {
-  "name": "SOC_BLOCKLIST",
-  "address": "194.165.16.78",
-  "detail": "Active C2 — Meterpreter beacon — MISP Event #1083 — auto-blocked by n8n [2026-04-23T14:30:19Z]"
+  "address": "194.165.16.78"
 }
+
+POST /api/firewall/alias/reconfigure
 ```
 
 **Result:** Active C2 session terminated. Attacker loses interactive access to `DESKTOP-DEV04`.
 
 ---
 
-### Action 2 — Block Associated C2 Domain via pfSense
+### Action 2 — Block Associated C2 Domain via OPNsense
 
 n8n also blocks the associated domain from MISP to prevent re-establishment via DNS:
 
 ```
-POST /api/v1/firewall/alias/entry
+POST /api/firewall/alias/addHost/blocklist_domains
 {
-  "name": "SOC_DOMAIN_BLOCKLIST",
-  "address": "cdn-update.securehosting-nl.com",
-  "detail": "C2 domain — MISP Event #1083 — auto-blocked [2026-04-23T14:30:20Z]"
+  "address": "cdn-update.securehosting-nl.com"
 }
+
+POST /api/firewall/alias/reconfigure
 ```
 
 ---
@@ -291,7 +291,7 @@ n8n creates a structured case in DFIR IRIS.
 ```
 [AUTOMATED ALERT — SOC Pipeline]
 
-Suricata on pfSense detected active C2 beaconing from DESKTOP-DEV04 (10.0.2.31) 
+Suricata on OPNsense detected active C2 beaconing from DESKTOP-DEV04 (10.0.2.31) 
 to 194.165.16.78:4444. The traffic pattern is consistent with a Meterpreter reverse 
 shell — 60-second beacon intervals, 22 minutes of active session time, and 312 KB 
 of inbound data (likely payload delivery).
@@ -299,7 +299,7 @@ of inbound data (likely payload delivery).
 TIMELINE:
 - 14:08:42 UTC — First beacon observed
 - 14:30:11 UTC — Suricata alert triggered and detected by Wazuh
-- 14:30:19 UTC — C2 IP blocked via pfSense (session terminated)
+- 14:30:19 UTC — C2 IP blocked via OPNsense (session terminated)
 
 ENRICHMENT SUMMARY:
 - AbuseIPDB Score: 91/100 (189 prior reports)
@@ -308,8 +308,8 @@ ENRICHMENT SUMMARY:
 - Associated C2 domain: cdn-update.securehosting-nl.com
 
 AUTOMATED ACTIONS TAKEN:
-- C2 IP 194.165.16.78 blocked via pfSense (active session terminated)
-- C2 domain cdn-update.securehosting-nl.com blocked via pfSense
+- C2 IP 194.165.16.78 blocked via OPNsense (active session terminated)
+- C2 domain cdn-update.securehosting-nl.com blocked via OPNsense
 - User account d.okonkwo@company.com disabled via Microsoft Entra
 - MISP event #1083 updated with affected host
 
@@ -333,13 +333,13 @@ INVESTIGATION REQUIRED:
 | C2 IP | `194.165.16.78` | AbuseIPDB / VirusTotal / MISP |
 | C2 Port | `4444` | Suricata / MISP |
 | C2 Domain | `cdn-update.securehosting-nl.com` | MISP Event #1083 |
-| Affected Host | `DESKTOP-DEV04` (`10.0.2.31`) | pfSense / Wazuh |
+| Affected Host | `DESKTOP-DEV04` (`10.0.2.31`) | OPNsense / Wazuh |
 | Affected User | `d.okonkwo@company.com` | Active session |
 | Malware Family | `Meterpreter / Cobalt Strike` | VirusTotal / MISP |
 
 ### Analyst Tasks (Auto-Generated)
 
-1. Review pfSense flow logs for the full 22-minute session — extract all data transferred
+1. Review OPNsense flow logs for the full 22-minute session — extract all data transferred
 2. Run Wazuh process and command execution logs on `DESKTOP-DEV04` for the session window
 3. Check for evidence of credential harvesting (LSASS access, credential files)
 4. Check for lateral movement — review authentication logs on other internal hosts
@@ -356,10 +356,10 @@ INVESTIGATION REQUIRED:
 
 | Stage | Action | Result |
 |---|---|---|
-| Detection | Suricata (pfSense) + Wazuh rule 86601 | Active C2 beacon identified |
+| Detection | Suricata (OPNsense) + Wazuh rule 86601 | Active C2 beacon identified |
 | Enrichment | AbuseIPDB / VirusTotal / MISP | Confirmed Meterpreter C2 infrastructure |
-| Response | pfSense — C2 IP block | Active attacker session terminated |
-| Response | pfSense — C2 domain block | Re-establishment via DNS prevented |
+| Response | OPNsense — C2 IP block | Active attacker session terminated |
+| Response | OPNsense — C2 domain block | Re-establishment via DNS prevented |
 | Response | Entra account disabled | Credential reuse prevented |
 | Case Management | IRIS case created | IR Lead assigned for full incident response |
 

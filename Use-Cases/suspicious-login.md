@@ -163,7 +163,7 @@ n8n evaluates the enriched data:
 
 ---
 
-## Stage 3 — Response Actions (n8n → Microsoft Entra / pfSense)
+## Stage 3 — Response Actions (n8n → Microsoft Entra / OPNsense)
 
 ### Action 1 — Revoke All Active Sessions
 
@@ -192,17 +192,17 @@ PATCH /v1.0/users/j.harrison@company.com
 
 ---
 
-### Action 3 — Block IP via pfSense
+### Action 3 — Block IP via OPNsense
 
-n8n calls the pfSense API to block the source IP:
+n8n calls the OPNsense API to block the source IP:
 
 ```
-POST /api/v1/firewall/alias/entry
+POST /api/firewall/alias/addHost/blocklist_dynamic
 {
-  "name": "SOC_BLOCKLIST",
-  "address": "91.108.56.192",
-  "detail": "Credential stuffing source — auto-blocked by n8n [2026-04-23T03:47:19Z]"
+  "address": "91.108.56.192"
 }
+
+POST /api/firewall/alias/reconfigure
 ```
 
 **Result:** IP blocked at the network perimeter.
@@ -259,7 +259,7 @@ ENRICHMENT SUMMARY:
 AUTOMATED ACTIONS TAKEN:
 - Active sessions revoked via Microsoft Graph
 - Account j.harrison@company.com disabled via Microsoft Entra
-- IP 91.108.56.192 blocked via pfSense
+- IP 91.108.56.192 blocked via OPNsense
 - MISP event #1058 updated
 
 INVESTIGATION REQUIRED:
@@ -298,7 +298,7 @@ INVESTIGATION REQUIRED:
 | Enrichment | AbuseIPDB / VirusTotal / MISP | IP linked to active credential stuffing campaign |
 | Response | Sessions revoked | Attacker access terminated |
 | Response | Account disabled | Re-authentication prevented |
-| Response | pfSense block | IP blocked at perimeter |
+| Response | OPNsense block | IP blocked at perimeter |
 | Case Management | IRIS case created | Tier 2 analyst assigned for investigation |
 
 **Mean Time to Respond (MTTR): ~11 seconds from login detection to session revocation.**

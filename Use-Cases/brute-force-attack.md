@@ -153,21 +153,21 @@ n8n evaluates the enriched data:
 
 ---
 
-## Stage 3 — Response Actions (n8n → pfSense / Microsoft Entra)
+## Stage 3 — Response Actions (n8n → OPNsense / Microsoft Entra)
 
 Based on the decision logic, n8n triggers the following automated actions:
 
-### Action 1 — Block IP via pfSense
+### Action 1 — Block IP via OPNsense
 
-n8n calls the pfSense API to add `185.220.101.47` to the blocklist:
+n8n calls the OPNsense API to add `185.220.101.47` to the blocklist:
 
 ```
-POST /api/v1/firewall/alias/entry
+POST /api/firewall/alias/addHost/blocklist_dynamic
 {
-  "name": "SOC_BLOCKLIST",
-  "address": "185.220.101.47",
-  "detail": "Brute force source — auto-blocked by n8n [2026-04-23T02:14:45Z]"
+  "address": "185.220.101.47"
 }
+
+POST /api/firewall/alias/reconfigure
 ```
 
 **Result:** All traffic from `185.220.101.47` dropped at the perimeter.
@@ -235,7 +235,7 @@ ENRICHMENT SUMMARY:
 - MISP Match: Event #1042 — RDP-Scanning Botnet, Eastern Europe (TLP:AMBER)
 
 AUTOMATED ACTIONS TAKEN:
-- IP 185.220.101.47 blocked via pfSense
+- IP 185.220.101.47 blocked via OPNsense
 - Administrator account disabled via Microsoft Entra
 - MISP event #1042 updated with new attribute
 
@@ -269,7 +269,7 @@ INVESTIGATION REQUIRED:
 |---|---|---|
 | Detection | Wazuh rule 60106 triggered | Alert generated within seconds |
 | Enrichment | AbuseIPDB / VirusTotal / MISP | IP confirmed malicious |
-| Response | pfSense block | Attack traffic dropped at perimeter |
+| Response | OPNsense block | Attack traffic dropped at perimeter |
 | Response | Entra account disabled | Target account protected |
 | Case Management | IRIS case created | Analyst assigned for review |
 

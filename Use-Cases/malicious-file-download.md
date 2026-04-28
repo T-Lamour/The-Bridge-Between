@@ -167,36 +167,36 @@ n8n evaluates the enriched data:
 
 ---
 
-## Stage 3 — Response Actions (n8n → pfSense / Microsoft Entra / Wazuh)
+## Stage 3 — Response Actions (n8n → OPNsense / Microsoft Entra / Wazuh)
 
-### Action 1 — Block C2 IP via pfSense
+### Action 1 — Block C2 IP via OPNsense
 
-n8n calls the pfSense API to block the known Emotet C2 address identified via MISP:
+n8n calls the OPNsense API to block the known Emotet C2 address identified via MISP:
 
 ```
-POST /api/v1/firewall/alias/entry
+POST /api/firewall/alias/addHost/blocklist_dynamic
 {
-  "name": "SOC_BLOCKLIST",
-  "address": "45.132.227.88",
-  "detail": "Emotet C2 — MISP Event #1071 — auto-blocked by n8n [2026-04-23T10:22:18Z]"
+  "address": "45.132.227.88"
 }
+
+POST /api/firewall/alias/reconfigure
 ```
 
 **Result:** Any callback attempts from `DESKTOP-FIN02` to the C2 server are dropped at the perimeter, preventing Emotet from establishing persistence or downloading secondary payloads.
 
 ---
 
-### Action 2 — Block Phishing Download Domain via pfSense
+### Action 2 — Block Phishing Download Domain via OPNsense
 
 n8n also blocks the phishing delivery domain to prevent other users downloading the same file:
 
 ```
-POST /api/v1/firewall/alias/entry
+POST /api/firewall/alias/addHost/blocklist_domains
 {
-  "name": "SOC_DOMAIN_BLOCKLIST",
-  "address": "invoices-secure-docs.net",
-  "detail": "Emotet phishing domain — MISP Event #1071 — auto-blocked [2026-04-23T10:22:19Z]"
+  "address": "invoices-secure-docs.net"
 }
+
+POST /api/firewall/alias/reconfigure
 ```
 
 ---
@@ -268,8 +268,8 @@ ENRICHMENT SUMMARY:
 - Delivery Domain: invoices-secure-docs.net
 
 AUTOMATED ACTIONS TAKEN:
-- C2 IP 45.132.227.88 blocked via pfSense
-- Phishing domain invoices-secure-docs.net blocked via pfSense
+- C2 IP 45.132.227.88 blocked via OPNsense
+- Phishing domain invoices-secure-docs.net blocked via OPNsense
 - User account s.patel@company.com disabled via Microsoft Entra
 - MISP event #1071 updated with affected host
 
@@ -310,8 +310,8 @@ INVESTIGATION REQUIRED:
 |---|---|---|
 | Detection | Wazuh FIM + rule 87105 | Malicious file identified on write to disk |
 | Enrichment | VirusTotal / MISP | Confirmed Emotet, active campaign identified |
-| Response | pfSense — C2 block | Outbound C2 callback prevented |
-| Response | pfSense — domain block | Other users protected from same download |
+| Response | OPNsense — C2 block | Outbound C2 callback prevented |
+| Response | OPNsense — domain block | Other users protected from same download |
 | Response | Entra account disabled | User account locked pending investigation |
 | Case Management | IRIS case created | Tier 2 analyst assigned for triage |
 

@@ -1,187 +1,224 @@
-# ISO/IEC 27001 Mapping
+# ISO/IEC 27001:2022 Control Mapping
 
 ## Overview
 
-ISO/IEC 27001 is an international standard for establishing, implementing, maintaining, and continuously improving an Information Security Management System (ISMS).
+ISO/IEC 27001:2022 is the current edition of the international standard for Information Security Management Systems (ISMS). This document maps the technical controls deployed in this SOC to the Annex A controls in the 2022 edition.
 
-In this project, ISO 27001 is used as a **design and mapping framework**, not as a formal certification. It helps demonstrate how the SOC architecture aligns with recognised security controls and best practices.
+All Annex A references use **ISO 27001:2022 numbering**. The 2022 revision reorganised the control set from 114 controls (2013) into 93 controls across four categories: Organisational (A.5), People (A.6), Physical (A.7), and Technological (A.8).
 
----
-
-## Purpose in This Project
-
-The purpose of mapping ISO 27001 to this SOC environment is to:
-
-* Demonstrate security control alignment
-* Show structured risk-based thinking
-* Validate that the SOC design follows industry standards
-* Provide a compliance-aware security architecture
+This mapping is a **technical demonstration**, not a certified ISMS. Formal certification requires governance documentation, management commitment, scope definition, and auditor assessment — none of which are in scope for this project.
 
 ---
 
-## High-Level ISMS Alignment
+## Control Mapping
 
-This SOC simulates key ISO 27001 principles:
+### A.5.7 — Threat Intelligence
 
-* **Confidentiality** → Controlled access to systems and logs
-* **Integrity** → Log protection and alert validation via SIEM
-* **Availability** → Resilient monitoring and automation workflows
-* **Accountability** → Centralised logging and case management
+**Requirement:** Collect and analyse information about threats relevant to the organisation.
 
----
+**Implementation:**
 
-## Control Mapping to SOC Components
+* MISP ingests threat intelligence feeds (CIRCL OSINT, abuse.ch Feodo Tracker, URLhaus, MalwareBazaar) on a daily schedule
+* n8n queries AbuseIPDB and VirusTotal for every alert's source IP, returning confidence scores and historical reports
+* Confirmed IOCs from resolved incidents are written back to MISP, creating an internal threat database that improves over time
 
-### 1. Logging & Monitoring (Annex A.8 / A.12)
-
-**Implemented via:**
-
-* Wazuh SIEM
-* Suricata (pfSense IDS)
-* System and endpoint log collection
-
-**Function:**
-
-* Continuous monitoring of security events
-* Centralised log aggregation
-* Detection of suspicious activity
+**Outcome:** Every enrichment decision is informed by both external feeds and internal incident history.
 
 ---
 
-### 2. Access Control (Annex A.5 / A.9)
+### A.5.15 — Access Control
 
-**Implemented via:**
+**Requirement:** Rules to control physical and logical access to information and assets shall be established and implemented.
 
-* pfSense firewall rules
-* System-level user permissions
-* (Planned) Identity response via Microsoft Entra
+**Implementation:**
 
-**Function:**
-
-* Restricting network and system access
-* Enforcing least privilege principles
-* Preventing unauthorised access paths
+* OPNsense firewall rules enforce VLAN-level access control — VLAN 30 (Victim) cannot reach SOC tools on VLAN 20 except through permitted ports
+* SOC tool web interfaces are accessible only from VLAN 10 (Management)
+* Each tool uses separate credentials; no shared passwords across the stack
+* API keys are scoped — MISP API key is restricted to the n8n VM IP (`10.10.10.20`)
 
 ---
 
-### 3. Incident Management (Annex A.5.24 / A.5.25)
+### A.5.24 — Information Security Incident Management Planning and Preparation
 
-**Implemented via:**
+**Requirement:** An incident response process shall be planned and prepared.
 
-* DFIR IRIS case management system
-* n8n incident creation workflows
+**Implementation:**
 
-**Function:**
-
-* Structured incident tracking
-* Defined investigation workflow
-* Documentation of response actions
+* n8n workflows define a repeatable, documented response process for each incident type (brute force, malicious file, suspicious login, C2 beaconing)
+* DFIR IRIS provides structured case templates pre-populated with investigation task checklists
+* The pipeline runs automatically — no manual triage required for the initial response phase
 
 ---
 
-### 4. Threat Intelligence (Annex A.5.7)
+### A.5.25 — Assessment and Decision on Information Security Events
 
-**Implemented via:**
+**Requirement:** Security events shall be assessed to determine whether they qualify as incidents.
 
-* MISP (IOC database)
-* VirusTotal / AbuseIPDB integrations (via n8n)
+**Implementation:**
 
-**Function:**
-
-* Enrichment of security alerts
-* Correlation of indicators of compromise
-* Improved detection accuracy
+* n8n applies a decision node after enrichment: AbuseIPDB confidence >50 OR VirusTotal detections >3 → confirmed incident
+* Alerts that do not meet the threshold are discarded without creating a case, reducing analyst noise
+* The threshold is configurable per workflow to accommodate tuning as alert patterns become clearer
 
 ---
 
-### 5. Network Security (Annex A.8 / A.13)
+### A.5.26 — Response to Information Security Incidents
 
-**Implemented via:**
+**Requirement:** Incidents shall be responded to in accordance with documented procedures.
 
-* pfSense firewall
-* Suricata IDS/IPS
+**Implementation:**
 
-**Function:**
-
-* Network segmentation and traffic control
-* Detection of malicious network activity
-* Blocking of known threats
+* Automated response executes within seconds: OPNsense IP block, Microsoft Entra account disable (where applicable), IRIS case creation with IOC and asset attached
+* Response actions are logged in the IRIS case timeline for full audit trail
+* Analyst assigns severity, updates case status, and closes after investigation
 
 ---
 
-### 6. Security Automation (Operational Control Support)
+### A.5.27 — Learning from Information Security Incidents
 
-**Implemented via:**
+**Requirement:** Knowledge gained from incidents shall be used to improve controls.
 
-* n8n workflows
+**Implementation:**
 
-**Function:**
-
-* Automated alert enrichment
-* Incident creation in IRIS
-* Triggering of response actions (blocking, escalation, logging)
+* Post-incident IOCs are written to MISP — future alerts involving the same indicator are enriched with known-bad context
+* False positives identified during case review feed back into n8n threshold adjustment and Wazuh rule tuning
+* IRIS case closure notes document what changed and why
 
 ---
 
-## SOC Architecture as a Control System
+### A.8.2 — Privileged Access Rights
 
-The SOC architecture directly supports ISO 27001 objectives:
+**Requirement:** Privileged access rights shall be restricted and managed.
 
-```text id="iso-flow"
-Detection → Wazuh + Suricata
-     │
-Enrichment → MISP + Threat Intel APIs
-     │
-Automation → n8n
-     │
-Incident Management → DFIR IRIS
-     │
-Network Enforcement → pfSense
-```
+**Implementation:**
+
+* Each SOC tool runs with a dedicated admin account; no tool shares credentials with another
+* n8n API credentials are stored encrypted (AES-256 via N8N_ENCRYPTION_KEY) and never exposed in workflow JSON exports
+* OPNsense API user (`n8n-api`) is scoped to firewall alias operations only
 
 ---
 
-## Risk-Based Design Approach
+### A.8.8 — Management of Technical Vulnerabilities
 
-This SOC is designed around common security risks:
+**Requirement:** Information about technical vulnerabilities shall be obtained and acted upon.
 
-| Risk                  | Control Implementation     |
-| --------------------- | -------------------------- |
-| Credential compromise | Login detection via Wazuh  |
-| Malware execution     | File / endpoint monitoring |
-| Network intrusion     | Suricata IDS               |
-| Lateral movement      | Log correlation + alerting |
-| Data exposure         | Firewall segmentation      |
+**Implementation:**
+
+* Wazuh vulnerability detection module scans installed packages on all enrolled agents against the NVD CVE database
+* Results are visible in the Wazuh dashboard under Vulnerability Detector
+* Docker image versions are pinned in Compose files — unplanned updates do not introduce untested changes
 
 ---
 
-## Continuous Improvement (ISO Principle)
+### A.8.15 — Logging
 
-The architecture supports continuous improvement through:
+**Requirement:** Logs that record activities, exceptions, faults, and other relevant events shall be produced, stored, protected, and analysed.
 
-* Feedback loops via incident investigations
-* IOC enrichment added back into MISP
-* Refinement of Wazuh detection rules
-* Automation workflow updates in n8n
+**Implementation:**
 
-This mirrors the ISO 27001 requirement for ongoing system improvement.
+* Wazuh agents collect authentication, process, file, and system logs from all enrolled endpoints
+* OPNsense forwards firewall and Suricata logs to Wazuh via syslog (UDP 514)
+* All logs are centralised in the Wazuh Indexer (OpenSearch) with configurable retention
+* n8n execution logs record every workflow run, including input payloads and response outputs
+
+---
+
+### A.8.16 — Monitoring Activities
+
+**Requirement:** Networks, systems, and applications shall be monitored for anomalous behaviour.
+
+**Implementation:**
+
+* Suricata monitors all network interfaces on OPNsense in real time using the Emerging Threats Open ruleset
+* Wazuh agents monitor authentication events, process execution, and file integrity continuously
+* n8n receives Wazuh alerts via webhook — enrichment and decision logic run automatically on every level 7+ alert
+* The pipeline produces an IRIS case for every confirmed incident without requiring analyst polling
+
+---
+
+### A.8.20 — Networks Security
+
+**Requirement:** Networks shall be secured, managed, and controlled to protect information in systems and applications.
+
+**Implementation:**
+
+* Three isolated VLANs separate the management plane, SOC tools, and victim lab
+* OPNsense enforces inter-VLAN firewall rules — lateral movement between zones requires explicit permit rules
+* The `blocklist_dynamic` alias provides a real-time IP block list updated automatically by n8n during incident response
+
+---
+
+### A.8.22 — Segregation of Networks
+
+**Requirement:** Groups of information services, users, and information systems shall be segregated in networks.
+
+**Implementation:**
+
+* VLAN 10 (10.10.1.0/24) — Management only; hypervisor and OPNsense console access
+* VLAN 20 (10.10.10.0/24) — SOC tools; Wazuh, n8n, MISP, DFIR IRIS
+* VLAN 30 (10.10.20.0/24) — Victim lab; monitored endpoints, no access to SOC tooling except Wazuh agent port 1514
+* All routing passes through OPNsense — no direct VLAN-to-VLAN path exists outside of permitted firewall rules
+
+---
+
+### A.8.23 — Web Filtering
+
+**Requirement:** Access to external websites shall be managed to reduce exposure to malicious content.
+
+**Implementation:**
+
+* OPNsense firewall rules control outbound internet access per VLAN
+* VLAN 30 (Victim) outbound is restricted — used in use-case scenarios to demonstrate C2 detection before traffic escapes
+* DNS-based domain blocking via the `blocklist_domains` alias blocks known malicious domains network-wide
+
+---
+
+## Control Coverage Summary
+
+| Control | Area | Implemented By |
+|---------|------|----------------|
+| A.5.7 | Threat Intelligence | MISP + AbuseIPDB + VirusTotal (via n8n) |
+| A.5.15 | Access Control | OPNsense firewall rules + credential scoping |
+| A.5.24 | Incident Planning | n8n workflows + IRIS templates |
+| A.5.25 | Incident Assessment | n8n decision node (enrichment thresholds) |
+| A.5.26 | Incident Response | n8n automation + DFIR IRIS case management |
+| A.5.27 | Learning from Incidents | MISP feedback loop + rule tuning |
+| A.8.2 | Privileged Access | Scoped API keys + encrypted credential storage |
+| A.8.8 | Vulnerability Management | Wazuh vulnerability detection module |
+| A.8.15 | Logging | Wazuh centralised log collection |
+| A.8.16 | Monitoring | Suricata + Wazuh continuous monitoring |
+| A.8.20 | Network Security | OPNsense + VLAN segmentation + blocklist |
+| A.8.22 | Network Segregation | Three-VLAN architecture |
+| A.8.23 | Web Filtering | OPNsense domain blocklist alias |
+
+---
+
+## Risk-Based Design
+
+The SOC architecture was designed around the attack scenarios most relevant to SMB environments:
+
+| Risk | Likelihood | Control |
+|------|-----------|---------|
+| Credential brute force | High | Wazuh rule 60106 → n8n auto-block |
+| Account compromise (M365) | High | Entra sign-in monitoring → account disable |
+| Malicious file download | Medium | Wazuh FIM + VirusTotal hash → host isolation |
+| C2 beaconing | Medium | Suricata ET rules → OPNsense block + DNS sinkhole |
+| Lateral movement | Medium | VLAN segmentation + log correlation |
+| Unpatched vulnerabilities | High | Wazuh vulnerability detection → analyst review |
 
 ---
 
 ## Limitations
 
-This implementation is:
+This mapping covers the technical control layer only. A complete ISO 27001 ISMS also requires:
 
-* A **conceptual mapping**, not a certified ISMS
-* Focused on technical controls rather than full governance
-* Missing formal policy and audit documentation layers
+* Scope definition and Statement of Applicability (SoA)
+* Information security policies and documented procedures
+* Risk assessment and risk treatment plan
+* Management review and internal audit programme
+* Evidence of continual improvement
 
----
-
-## Summary
-
-This SOC environment demonstrates alignment with ISO/IEC 27001 by implementing core technical controls across detection, response, access control, and threat intelligence.
-
-While not formally certified, the architecture reflects key principles of an Information Security Management System (ISMS) through a practical, automated security operations workflow.
+This project demonstrates **technical control implementation** — the controls that underpin the operational layer of an ISMS — not the governance and policy layer above it.
 
 ---

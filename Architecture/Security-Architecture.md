@@ -85,7 +85,7 @@ Function in Architecture:
 Provides internal threat intelligence
 Enhances alert context and confidence scoring
 
-## pfSense - Network Security Layer
+## OPNsense - Network Security Layer
 
 Role:
 Firewall and network segmentation.
@@ -93,20 +93,23 @@ Firewall and network segmentation.
 Key Capabilities:
 
 Traffic filtering and control
-VLAN/network segmentation
+VLAN/network segmentation (VLAN 10, 20, 30)
 Firewall rules and NAT
-Logging of network activity
+Suricata IDS — real-time packet inspection
+API-driven automated IP blocking
+Logging of network activity forwarded to Wazuh
 
 Function in Architecture:
 
 Provides network-level security controls
-Segments lab environment
-Acts as a potential enforcement point for response actions
+Segments the lab into Management, SOC, and Victim VLANs
+Acts as the automated enforcement point — n8n pushes block rules via the OPNsense API
 
 🔗 Integration Points
-| Source  | Destination            | Method          | Purpose                        |
-| ------- | ---------------------- | --------------- | ------------------------------ |
-| Wazuh   | n8n                    | Webhook         | Forward alerts for processing  |
-| n8n     | MISP                   | API             | IOC correlation / ingestion    |
-| n8n     | DFIR IRIS              | API             | Case creation                  |
-| pfSense | Wazuh                  | Logs     | Network visibility             |
+| Source    | Destination | Method          | Purpose                           |
+| --------- | ----------- | --------------- | --------------------------------- |
+| Wazuh     | n8n         | Webhook         | Forward alerts for processing     |
+| n8n       | MISP        | API             | IOC correlation / ingestion       |
+| n8n       | DFIR IRIS   | API             | Case creation                     |
+| OPNsense  | Wazuh       | Syslog (UDP 514)| Network and Suricata visibility   |
+| n8n       | OPNsense    | API             | Automated IP blocking             |
