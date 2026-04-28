@@ -24,17 +24,23 @@ Enterprise SOCs run on six-figure tooling. SMBs run on antivirus and hope for th
 
 ## Architecture
 
-<p align="center">
-  <img src="Architecture/SIEM-Solution.png" width="850" alt="SOC Architecture">
-</p>
-
-| Tool | Role | Why |
-| ---- | ---- | --- |
-| OPNsense + Suricata | Firewall + network IDS | Purpose-built firewall distro; Suricata adds deep packet inspection and ET Open signatures |
-| Wazuh | SIEM / XDR | Single agent covers log collection, FIM, vulnerability scanning, and rule-based detection |
-| n8n | SOAR automation | Self-hosted, code-optional workflow engine; integrates with every tool via REST |
-| MISP | Threat intelligence | Internal IOC database with feed ingestion; every confirmed indicator feeds future detections |
-| DFIR IRIS | Case management | Structured incident tracking from triage to closure, with timeline, assets, and IOC links |
+<table>
+<tr>
+<td><img src="Architecture/SIEM-Solution.png" width="500" alt="SOC Architecture"></td>
+<td>
+<table>
+<thead><tr><th>Tool</th><th>Role</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>OPNsense + Suricata</td><td>Firewall + IDS</td><td>Purpose-built firewall distro; Suricata adds deep packet inspection and ET Open signatures</td></tr>
+<tr><td>Wazuh</td><td>SIEM / XDR</td><td>Single agent covers log collection, FIM, vulnerability scanning, and rule-based detection</td></tr>
+<tr><td>n8n</td><td>SOAR automation</td><td>Self-hosted, code-optional workflow engine; integrates with every tool via REST</td></tr>
+<tr><td>MISP</td><td>Threat intelligence</td><td>Internal IOC database with feed ingestion; every confirmed indicator feeds future detections</td></tr>
+<tr><td>DFIR IRIS</td><td>Case management</td><td>Structured incident tracking from triage to closure, with timeline, assets, and IOC links</td></tr>
+</tbody>
+</table>
+</td>
+</tr>
+</table>
 
 Each tool runs as a Docker Compose stack on its own VM. Reasoning: [Deployment/00-prerequisites.md](Deployment/00-prerequisites.md).
 
