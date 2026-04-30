@@ -1,3 +1,5 @@
+# DFIR IRIS
+
 <p align="center">
   <img src="Images/Iris/logo.png" width="420"/>
 </p>
@@ -28,7 +30,7 @@ Within this project, IRIS ensures that all security events are properly document
 
 DFIR IRIS sits at the **end of the detection and enrichment pipeline**, where alerts become structured incidents:
 
-```id="iris-flow"
+```
      Wazuh SIEM
  (Detection & Alerts)
         │
@@ -43,97 +45,107 @@ DFIR IRIS sits at the **end of the detection and enrichment pipeline**, where al
 
 ---
 
+## Infrastructure
+
+DFIR IRIS runs on a dedicated **VMware Workstation VM** as a **Docker container**, accessed via its web interface for case management and analyst workflows.
+
+---
+
 ## Incident Creation
 
-Incidents are automatically created in IRIS via **n8n workflows**.
+Incidents are automatically created in IRIS via **n8n workflows**. When an alert meets the severity threshold, n8n calls the IRIS API to open a new case without any manual intervention required.
 
-### Included Data:
+### Data Included at Creation:
 
-* Alert details from Wazuh
-* Enriched threat intelligence
-* Indicators (IP addresses, domains, hashes)
-* Event timeline and metadata
+* Alert details from Wazuh (rule ID, level, description)
+* Enriched threat intelligence (VirusTotal, AbuseIPDB, MISP results)
+* Indicators of Compromise (IP addresses, domains, file hashes)
+* Event timeline and raw log metadata
 
-This ensures analysts have all relevant context from the start.
+This ensures analysts have full context from the moment a case is opened.
 
 ---
 
 ## Case Structure
 
-Each incident in IRIS is structured to support efficient investigation:
+Each incident in IRIS follows a consistent structure to support efficient investigation:
 
-### Typical Case Includes:
-
-* **Title** – Summary of the incident (e.g. "Malicious Login Detected")
-* **Description** – Detailed context and alert information
-* **Severity Level** – Based on enrichment and detection logic
-* **Indicators of Compromise (IOCs)** – IPs, domains, hashes
-* **Tasks** – Investigation and response steps
-* **Comments** – Analyst notes and findings
+| Field | Description |
+|-------|-------------|
+| **Title** | Summary of the incident (e.g. "Malicious Login – [hostname]") |
+| **Description** | Alert context, enrichment output, and initial findings |
+| **Severity** | Assigned based on Wazuh rule level and enrichment verdict |
+| **IOCs** | IP addresses, domains, and file hashes linked to the incident |
+| **Tasks** | Structured investigation and response steps |
+| **Comments** | Analyst notes, findings, and escalation decisions |
+| **Assets** | Affected hosts, accounts, and systems |
 
 ---
 
 ## Investigation Workflow
 
-IRIS supports a structured investigation process:
+IRIS supports a structured investigation process aligned with standard incident response phases:
 
-1. **Triage**
+### 1. Triage
 
-   * Review alert context and severity
-   * Determine if the alert is a true positive
+* Review alert context and enrichment data
+* Confirm whether the alert is a true positive or false positive
+* Assign severity and priority
 
-2. **Analysis**
+### 2. Analysis
 
-   * Examine logs and enriched data
-   * Correlate with threat intelligence
-   * Identify scope and impact
+* Examine associated logs and enriched indicators
+* Correlate with threat intelligence from MISP
+* Identify scope: how many systems or accounts are affected?
+* Map to MITRE ATT&CK technique where applicable
 
-3. **Containment**
+### 3. Containment
 
-   * Execute or verify response actions
-   * Prevent further malicious activity
+* Verify that automated responses (IP block, account disable) have executed correctly
+* Execute any additional manual containment steps required
+* Prevent lateral movement or further malicious activity
 
-4. **Eradication & Recovery**
+### 4. Eradication & Recovery
 
-   * Remove threats and restore systems
-   * Confirm environment is secure
+* Remove threats and restore affected systems to a known good state
+* Confirm the environment is secure before marking the incident as contained
 
-5. **Closure**
+### 5. Closure
 
-   * Document findings
-   * Mark incident as resolved
-   * Retain for future reference
+* Document all findings, actions taken, and the full timeline
+* Mark the incident as resolved
+* Add any newly identified indicators to MISP for future detection use
 
 ---
 
 ## Integration with SOC Workflow
 
-DFIR IRIS integrates with other tools in the environment:
+DFIR IRIS integrates with all other tools in the environment:
 
-* **n8n** → creates and updates incidents automatically
-* **Wazuh** → provides original alert data
-* **MISP** → supplies threat intelligence for correlation
-* **Response Systems** → actions triggered via automation (pfSense, Microsoft Entra)
+* **n8n** → automatically creates and updates cases via the IRIS API
+* **Wazuh** → provides the original alert data and log context
+* **MISP** → supplies threat intelligence for investigation correlation
+* **OPNsense / Microsoft Entra** → response actions executed by automation are documented within the case
 
-This ensures a seamless transition from detection to response.
+This ensures a seamless and fully auditable transition from detection to resolution.
 
 ---
 
 ## Key Benefits
 
-* Centralised incident tracking
+* Centralised incident tracking across all security events
 * Structured and repeatable investigation process
-* Improved visibility into security events
-* Supports collaboration and documentation
-* Aligns with real-world SOC workflows
+* Full visibility into all actions taken and analyst findings
+* Supports collaboration between multiple analysts
+* Aligns with real-world SOC workflows and IR methodologies
 
 ---
 
 ## Limitations
 
-* Requires integration for full automation (via n8n)
-* Manual investigation still required for complex cases
-* UI and features may require familiarisation
+* Requires n8n integration for automated case creation
+* Complex investigations still require manual analyst effort and judgement
+* New users require familiarisation with the IRIS UI and workflow model
 
 ---
 
@@ -141,15 +153,15 @@ This ensures a seamless transition from detection to response.
 
 The use of DFIR IRIS in this project follows key principles:
 
-* **Automation-driven intake** – incidents created automatically from alerts
-* **Structured investigations** – consistent handling of all incidents
-* **Full visibility** – all actions and findings documented
-* **Scalability** – suitable for multiple clients or environments
+* **Automation-driven intake** – cases created automatically from enriched alerts, not manual entry
+* **Structured investigations** – consistent handling ensures no steps are missed
+* **Full auditability** – all actions, decisions, and findings are documented and retained
+* **Scalable** – capable of supporting multiple clients or environments from a single instance
 
 ---
 
 ## Summary
 
-DFIR IRIS provides the **incident management backbone** of the SOC. It ensures that investigations follow a structured process, and all actions are documented and auditable
+DFIR IRIS provides the **incident management backbone** of the SOC. It ensures that every alert that reaches case status is investigated in a consistent, structured, and auditable manner — from initial triage through to closure and lessons learned.
 
 ---

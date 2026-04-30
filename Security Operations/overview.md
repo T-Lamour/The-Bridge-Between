@@ -16,9 +16,37 @@ The SOC is built around the following tools:
 * **n8n** – Workflow automation and orchestration (SOAR-like capabilities)
 * **DFIR IRIS** – Incident response and case management
 * **MISP** – Threat intelligence platform
-* **pfSense** – Network firewall and traffic control
+* **OPNsense** – Network firewall and traffic control
 
 Each tool plays a specific role in the detection and response lifecycle.
+
+---
+
+## Infrastructure
+
+The SOC is deployed in a home lab environment using **VMware Workstation**, with each tool running on a dedicated virtual machine. Tools are containerised using **Docker** within each VM, simplifying deployment, updates, and isolation.
+
+| Component | Deployment |
+|-----------|------------|
+| Wazuh | Dedicated VM (Docker) |
+| n8n | Dedicated VM (Docker) |
+| DFIR IRIS | Dedicated VM (Docker) |
+| MISP | Dedicated VM (Docker) |
+| OPNsense | Dedicated VM |
+
+> **Future:** Migration to physical servers is planned to improve performance and better reflect production SOC environments.
+
+---
+
+## Monitored Endpoints
+
+Wazuh agents are deployed across the following systems:
+
+* Windows 10 (workstation)
+* Windows Server
+* Linux systems
+
+OPNsense integration is planned to extend log collection to network-level events such as firewall rule matches and blocked traffic.
 
 ---
 
@@ -41,7 +69,7 @@ The SOC operates using the following pipeline:
    * Alerts are sent to n8n via webhook
    * n8n enriches data using:
 
-     * Threat intelligence (e.g. MISP, VirusTotal, AbuseIPDB)
+     * Threat intelligence (MISP, VirusTotal, AbuseIPDB)
      * Contextual data (IP reputation, geolocation, etc.)
 
 4. **Incident Creation**
@@ -55,12 +83,12 @@ The SOC operates using the following pipeline:
 
      * Disabling user accounts
      * Revoking sessions (Microsoft Entra)
-     * Blocking IPs via pfSense
+     * Blocking IPs via OPNsense
      * Updating threat intelligence in MISP
 
 ---
 
-## Data Flow Summary
+## Data Flow
 
 ```
 Endpoint / Network Device
@@ -73,13 +101,13 @@ Endpoint / Network Device
         n8n
  (Enrichment & Automation)
         │
-        ▼
-    DFIR IRIS
- (Case Management)
+        ├──────────► MISP (IOC Lookup)
+        │
+        ├──────────► DFIR IRIS (Incident Creation)
         │
         ▼
  Response Actions
-(pfSense / Entra / Defender)
+(OPNsense / Entra / Defender)
 ```
 
 ---
@@ -103,14 +131,14 @@ Endpoint / Network Device
 
 ---
 
-## Next Steps
+## Component Documentation
 
 For detailed configuration and implementation, see:
 
-* `wazuh.md`
-* `n8n.md`
-* `dfir-iris.md`
-* `misp.md`
-* `pfsense.md`
+* [wazuh.md](wazuh.md) – SIEM, log collection, and detection rules
+* [n8n.md](n8n.md) – Automation workflows and SOAR capabilities
+* [iris.md](iris.md) – Incident response and case management
+* [misp.md](misp.md) – Threat intelligence and IOC management
+* [opnsense.md](opnsense.md) – Firewall and network control
 
 ---
