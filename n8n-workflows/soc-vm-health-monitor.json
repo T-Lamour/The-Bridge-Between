@@ -1,0 +1,307 @@
+{
+  "name": "SOC - VM Health Monitor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{"field": "minutes", "minutesInterval": 5}]
+        }
+      },
+      "id": "mon-01",
+      "name": "Schedule: Every 5 Min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://{{ $env.OPNSENSE_HOST }}/api/core/firmware/status",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 8000,
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "mon-02",
+      "name": "Check OPNsense",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 80],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "opnsense-api-cred", "name": "OPNsense API"}
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://{{ $env.WAZUH_HOST }}:55000/",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 8000,
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "mon-03",
+      "name": "Check Wazuh",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 200],
+      "onError": "continueRegularOutput"
+    },
+
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://{{ $env.N8N_HOST }}:5678/healthz",
+        "options": {
+          "timeout": 8000,
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "mon-04",
+      "name": "Check n8n",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "onError": "continueRegularOutput"
+    },
+
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://{{ $env.MISP_HOST }}/users/login",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 8000,
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "mon-05",
+      "name": "Check MISP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 400],
+      "onError": "continueRegularOutput"
+    },
+
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://{{ $env.IRIS_HOST }}/api/v1/users/whoami",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 8000,
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "mon-06",
+      "name": "Check IRIS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 520],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "iris-api-cred", "name": "DFIR IRIS"}
+      }
+    },
+
+    {
+      "parameters": {
+        "jsCode": "// Detect if a node's response indicates the service is reachable.\n// neverError + continueRegularOutput means connection failures land here\n// as items with { code: 'ECONNREFUSED' } or similar error objects.\nconst isUp = (nodeName) => {\n  try {\n    const r = $(nodeName).first()?.json;\n    if (!r) return false;\n    // Node-level connection errors\n    if (r.code && ['ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNRESET'].includes(r.code)) return false;\n    // Any real HTTP response (even 4xx) means the service is running\n    return true;\n  } catch(e) { return false; }\n};\n\nconst services = [\n  { key: 'opnsense', name: 'OPNsense',  node: 'Check OPNsense', host: $env.OPNSENSE_HOST ?? '10.10.1.254',  severity: 5 },\n  { key: 'wazuh',    name: 'Wazuh',     node: 'Check Wazuh',    host: $env.WAZUH_HOST    ?? '10.10.10.10', severity: 5 },\n  { key: 'n8n',      name: 'n8n',       node: 'Check n8n',      host: $env.N8N_HOST      ?? '10.10.10.20', severity: 4 },\n  { key: 'misp',     name: 'MISP',      node: 'Check MISP',     host: $env.MISP_HOST     ?? '10.10.10.30', severity: 3 },\n  { key: 'iris',     name: 'DFIR IRIS', node: 'Check IRIS',     host: $env.IRIS_HOST     ?? '10.10.10.40', severity: 3 },\n];\n\n// Retrieve persistent state from previous execution\nconst staticData = $getWorkflowStaticData('global');\nconst lastState  = staticData.serviceState ?? {};\n\nconst now          = new Date().toISOString();\nconst currentState = {};\nconst alerts       = [];\nlet   maxSeverity  = 1;\n\nfor (const svc of services) {\n  const up   = isUp(svc.node);\n  const prev = lastState[svc.key] ?? 'up'; // assume up on first run\n  currentState[svc.key] = up ? 'up' : 'down';\n\n  if (prev === 'up' && !up) {\n    alerts.push({ service: svc.name, host: svc.host, event: 'DOWN', severity: svc.severity, time: now });\n    if (svc.severity > maxSeverity) maxSeverity = svc.severity;\n  } else if (prev === 'down' && up) {\n    alerts.push({ service: svc.name, host: svc.host, event: 'RECOVERED', severity: 2, time: now });\n    if (2 > maxSeverity) maxSeverity = 2;\n  }\n}\n\n// Persist updated state\nstaticData.serviceState = currentState;\nstaticData.lastCheck    = now;\n\nreturn [{\n  json: {\n    currentState,\n    alerts,\n    hasAlerts:   alerts.length > 0,\n    maxSeverity,\n    checkedAt:   now\n  }\n}];"
+      },
+      "id": "mon-07",
+      "name": "Evaluate & Track State",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "loose"},
+          "conditions": [
+            {
+              "id": "ifa-01",
+              "leftValue": "={{ $json.hasAlerts }}",
+              "rightValue": true,
+              "operator": {"type": "boolean", "operation": "true", "singleValue": true}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "mon-08",
+      "name": "IF: Any Alerts?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [920, 300]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ab-01",
+              "name": "alert_title",
+              "value": "={{ 'SOC Infrastructure — ' + $json.alerts.map(a => a.service + ' ' + a.event).join(', ') }}",
+              "type": "string"
+            },
+            {
+              "id": "ab-02",
+              "name": "alert_description",
+              "value": "={{ '## SOC Infrastructure Health Alert\\n\\n' + $json.alerts.map(a => '**' + a.service + '** (`' + a.host + '`): **' + a.event + '** — ' + a.time).join('\\n\\n') + '\\n\\n---\\n\\n## Current State\\n\\n| Service | Status |\\n|---|---|\\n' + Object.entries($json.currentState).map(([k, v]) => '| ' + k + ' | ' + (v === 'up' ? '✓ Up' : '✗ Down') + ' |').join('\\n') }}",
+              "type": "string"
+            },
+            {
+              "id": "ab-03",
+              "name": "alert_severity_id",
+              "value": "={{ $json.maxSeverity }}",
+              "type": "number"
+            },
+            {
+              "id": "ab-04",
+              "name": "alert_tags",
+              "value": "infrastructure,vm-health,automated",
+              "type": "string"
+            },
+            {
+              "id": "ab-05",
+              "name": "alert_source_ref",
+              "value": "={{ 'HEALTH-' + $now.toUnixInteger() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mon-09",
+      "name": "Build Alert Body",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1140, 180]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $env.IRIS_HOST }}/api/v1/alerts/add",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  alert_title: $json.alert_title,\n  alert_description: $json.alert_description,\n  alert_severity_id: $json.alert_severity_id,\n  alert_status_id: 2,\n  alert_source: 'VM Health Monitor',\n  alert_source_ref: $json.alert_source_ref,\n  alert_source_event_time: $now.toISO(),\n  alert_tags: $json.alert_tags,\n  alert_customer_id: 1,\n  alert_classification_id: 1\n}) }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "mon-10",
+      "name": "Create IRIS Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1360, 180],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "iris-api-cred", "name": "DFIR IRIS"}
+      }
+    },
+
+    {
+      "parameters": {},
+      "id": "mon-11",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [240, 540]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "err-01", "name": "error_workflow", "value": "SOC - VM Health Monitor", "type": "string"},
+            {"id": "err-02", "name": "error_node", "value": "={{ $json.execution.error.node.name ?? 'unknown' }}", "type": "string"},
+            {"id": "err-03", "name": "error_message", "value": "={{ $json.execution.error.message ?? 'unknown error' }}", "type": "string"},
+            {"id": "err-04", "name": "error_time", "value": "={{ $now.toISO() }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "mon-12",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 540]
+    }
+  ],
+
+  "connections": {
+    "Schedule: Every 5 Min": {
+      "main": [
+        [
+          {"node": "Check OPNsense", "type": "main", "index": 0},
+          {"node": "Check Wazuh",    "type": "main", "index": 0},
+          {"node": "Check n8n",      "type": "main", "index": 0},
+          {"node": "Check MISP",     "type": "main", "index": 0},
+          {"node": "Check IRIS",     "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Check OPNsense": {
+      "main": [[{"node": "Evaluate & Track State", "type": "main", "index": 0}]]
+    },
+    "Check Wazuh": {
+      "main": [[{"node": "Evaluate & Track State", "type": "main", "index": 1}]]
+    },
+    "Check n8n": {
+      "main": [[{"node": "Evaluate & Track State", "type": "main", "index": 2}]]
+    },
+    "Check MISP": {
+      "main": [[{"node": "Evaluate & Track State", "type": "main", "index": 3}]]
+    },
+    "Check IRIS": {
+      "main": [[{"node": "Evaluate & Track State", "type": "main", "index": 4}]]
+    },
+    "Evaluate & Track State": {
+      "main": [
+        [{"node": "IF: Any Alerts?", "type": "main", "index": 0}]
+      ]
+    },
+    "IF: Any Alerts?": {
+      "main": [
+        [{"node": "Build Alert Body", "type": "main", "index": 0}],
+        []
+      ]
+    },
+    "Build Alert Body": {
+      "main": [
+        [{"node": "Create IRIS Alert", "type": "main", "index": 0}]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [{"node": "Log Error", "type": "main", "index": 0}]
+      ]
+    }
+  },
+
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": ""
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
