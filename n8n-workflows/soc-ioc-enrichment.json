@@ -1,0 +1,450 @@
+{
+  "name": "SOC - IOC Enrichment",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "enr-01",
+      "name": "Workflow Input Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "rules": [
+            {
+              "conditions": {
+                "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose"},
+                "conditions": [
+                  {
+                    "id": "sw-01",
+                    "leftValue": "={{ $json.ioc_type_id }}",
+                    "rightValue": 76,
+                    "operator": {"type": "number", "operation": "equals"}
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "0"
+            },
+            {
+              "conditions": {
+                "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "loose"},
+                "conditions": [
+                  {
+                    "id": "sw-02",
+                    "leftValue": "={{ $json.ioc_type_id }}",
+                    "rightValue": 113,
+                    "operator": {"type": "number", "operation": "equals"}
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "1"
+            }
+          ]
+        },
+        "fallbackOutput": "extra",
+        "options": {}
+      },
+      "id": "enr-02",
+      "name": "Switch: IOC Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [460, 300]
+    },
+
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.abuseipdb.com/api/v2/check",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {"name": "ipAddress", "value": "={{ $('Workflow Input Trigger').first().json.ioc_value }}"},
+            {"name": "maxAgeInDays", "value": "90"},
+            {"name": "verbose", "value": ""}
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "Accept", "value": "application/json"}
+          ]
+        },
+        "options": {
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "enr-03",
+      "name": "AbuseIPDB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 100],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "abuseipdb-cred", "name": "AbuseIPDB"}
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://threatfox-api.abuse.ch/api/v1/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: 'search_ioc', search_term: $('Workflow Input Trigger').first().json.ioc_value }) }}",
+        "options": {
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "enr-04",
+      "name": "ThreatFox IP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 100],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "abuseio-cred", "name": "Abuse.ch"}
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://feodotracker.abuse.ch/api/v1/host/check/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ address: $('Workflow Input Trigger').first().json.ioc_value }) }}",
+        "options": {
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "enr-05",
+      "name": "Feodo Tracker",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 100],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "abuseio-cred", "name": "Abuse.ch"}
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://otx.alienvault.com/api/v1/indicators/IPv4/{{ $('Workflow Input Trigger').first().json.ioc_value }}/general",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "enr-06",
+      "name": "OTX IP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 100],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "otx-cred", "name": "AlienVault OTX"}
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $env.MISP_HOST }}/attributes/restSearch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ returnFormat: 'json', value: $('Workflow Input Trigger').first().json.ioc_value, type: 'ip-src' }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "enr-07",
+      "name": "MISP IP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 100],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "misp-cred", "name": "MISP"}
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mb-api.abuse.ch/api/v1/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: 'get_info', hash: $('Workflow Input Trigger').first().json.ioc_value }) }}",
+        "options": {
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "enr-08",
+      "name": "MalwareBazaar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "abuseio-cred", "name": "Abuse.ch"}
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://threatfox-api.abuse.ch/api/v1/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: 'search_ioc', search_term: $('Workflow Input Trigger').first().json.ioc_value }) }}",
+        "options": {
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "enr-09",
+      "name": "ThreatFox Hash",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "abuseio-cred", "name": "Abuse.ch"}
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://otx.alienvault.com/api/v1/indicators/file/{{ $('Workflow Input Trigger').first().json.ioc_value }}/general",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "enr-10",
+      "name": "OTX Hash",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "otx-cred", "name": "AlienVault OTX"}
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $env.MISP_HOST }}/attributes/restSearch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ returnFormat: 'json', value: $('Workflow Input Trigger').first().json.ioc_value, type: 'sha256' }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "enr-11",
+      "name": "MISP Hash",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 300],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "misp-cred", "name": "MISP"}
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://urlhaus-api.abuse.ch/v1/host/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ host: $('Workflow Input Trigger').first().json.ioc_value }) }}",
+        "options": {
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "enr-12",
+      "name": "URLhaus",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 500],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "abuseio-cred", "name": "Abuse.ch"}
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://threatfox-api.abuse.ch/api/v1/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: 'search_ioc', search_term: $('Workflow Input Trigger').first().json.ioc_value }) }}",
+        "options": {
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "enr-13",
+      "name": "ThreatFox Domain",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 500],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "abuseio-cred", "name": "Abuse.ch"}
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://otx.alienvault.com/api/v1/indicators/domain/{{ $('Workflow Input Trigger').first().json.ioc_value }}/general",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "enr-14",
+      "name": "OTX Domain",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 500],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "otx-cred", "name": "AlienVault OTX"}
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $env.MISP_HOST }}/attributes/restSearch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ returnFormat: 'json', value: $('Workflow Input Trigger').first().json.ioc_value, type: 'domain' }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "enr-15",
+      "name": "MISP Domain",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 500],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "misp-cred", "name": "MISP"}
+      }
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const tryGet = (name) => {\n  try { return $(name).first()?.json ?? null; }\n  catch(e) { return null; }\n};\n\nconst ioc_value = $('Workflow Input Trigger').first().json.ioc_value ?? '';\nconst ioc_type_id = $('Workflow Input Trigger').first().json.ioc_type_id ?? 76;\n\n// Source data (null if branch didn't fire)\nconst abuseipdb   = tryGet('AbuseIPDB');\nconst tf_ip       = tryGet('ThreatFox IP');\nconst feodo       = tryGet('Feodo Tracker');\nconst otx_ip      = tryGet('OTX IP');\nconst misp_ip     = tryGet('MISP IP');\n\nconst malwarebazaar = tryGet('MalwareBazaar');\nconst tf_hash       = tryGet('ThreatFox Hash');\nconst otx_hash      = tryGet('OTX Hash');\nconst misp_hash     = tryGet('MISP Hash');\n\nconst urlhaus      = tryGet('URLhaus');\nconst tf_domain    = tryGet('ThreatFox Domain');\nconst otx_domain   = tryGet('OTX Domain');\nconst misp_domain  = tryGet('MISP Domain');\n\n// Resolve which branch fired\nconst tf   = tf_ip || tf_hash || tf_domain || null;\nconst otx  = otx_ip || otx_hash || otx_domain || null;\nconst misp = misp_ip || misp_hash || misp_domain || null;\n\nlet flags = 0;\nlet total = 0;\nconst flagged_by = [];\n\nif (abuseipdb?.data) {\n  total++;\n  const score = abuseipdb.data.abuseConfidenceScore ?? 0;\n  if (score > 50) { flags++; flagged_by.push(`AbuseIPDB: ${score}%`); }\n}\n\nif (tf?.data?.length > 0) {\n  total++;\n  flags++;\n  flagged_by.push(`ThreatFox: ${tf.data.length} match(es)`);\n} else if (tf) {\n  total++;\n}\n\nif (feodo) {\n  total++;\n  if (feodo.blacklisted === true) { flags++; flagged_by.push('Feodo: blacklisted C2'); }\n}\n\nif (malwarebazaar?.query_status === 'ok') {\n  total++;\n  flags++;\n  flagged_by.push(`MalwareBazaar: ${malwarebazaar.data?.[0]?.signature ?? 'malware hit'}`);\n} else if (malwarebazaar) {\n  total++;\n}\n\nif (urlhaus?.query_status === 'is_host') {\n  total++;\n  flags++;\n  flagged_by.push(`URLhaus: ${urlhaus.urls_online ?? 0} live URLs`);\n} else if (urlhaus) {\n  total++;\n}\n\nconst pulseCount = otx?.pulse_info?.count ?? 0;\nif (otx) {\n  total++;\n  if (pulseCount > 0) { flags++; flagged_by.push(`OTX: ${pulseCount} pulse(s)`); }\n}\n\nconst mispHits = misp?.response?.Attribute?.length ?? 0;\nif (misp) {\n  total++;\n  if (mispHits > 0) { flags++; flagged_by.push(`MISP: ${mispHits} attribute(s)`); }\n}\n\nconst confidence_pct = total > 0 ? Math.round((flags / total) * 100) : 0;\nconst verdict = flags === 0\n  ? 'CLEAN'\n  : confidence_pct >= 60\n    ? 'MALICIOUS'\n    : 'SUSPICIOUS';\n\nreturn [{\n  json: {\n    ioc_value,\n    ioc_type_id,\n    enrichment: {\n      abuseipdb: abuseipdb?.data ? {\n        score: abuseipdb.data.abuseConfidenceScore,\n        isp: abuseipdb.data.isp,\n        country: abuseipdb.data.countryCode,\n        reports: abuseipdb.data.totalReports\n      } : null,\n      threatfox: tf ? {\n        hits: tf.data?.length ?? 0,\n        first_match: tf.data?.[0] ?? null\n      } : null,\n      feodo: feodo ? { blacklisted: feodo.blacklisted ?? false } : null,\n      malwarebazaar: malwarebazaar?.query_status === 'ok' ? {\n        signature: malwarebazaar.data?.[0]?.signature ?? null,\n        file_type: malwarebazaar.data?.[0]?.file_type ?? null,\n        tags: malwarebazaar.data?.[0]?.tags ?? []\n      } : null,\n      urlhaus: urlhaus ? {\n        status: urlhaus.query_status,\n        urls_online: urlhaus.urls_online ?? 0\n      } : null,\n      otx: otx ? {\n        pulses: pulseCount,\n        tags: otx.pulse_info?.pulses?.[0]?.tags ?? []\n      } : null,\n      misp: misp ? {\n        hits: mispHits,\n        attributes: misp.response?.Attribute?.slice(0, 5) ?? []\n      } : null,\n      summary: {\n        verdict,\n        confidence_pct,\n        sources_flagged: flags,\n        total_sources: total,\n        flagged_by\n      }\n    }\n  }\n}];"
+      },
+      "id": "enr-16",
+      "name": "Normalise Enrichment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1800, 300]
+    }
+  ],
+
+  "connections": {
+    "Workflow Input Trigger": {
+      "main": [
+        [{"node": "Switch: IOC Type", "type": "main", "index": 0}]
+      ]
+    },
+    "Switch: IOC Type": {
+      "main": [
+        [{"node": "AbuseIPDB", "type": "main", "index": 0}],
+        [{"node": "MalwareBazaar", "type": "main", "index": 0}],
+        [{"node": "URLhaus", "type": "main", "index": 0}]
+      ]
+    },
+    "AbuseIPDB": {
+      "main": [[{"node": "ThreatFox IP", "type": "main", "index": 0}]]
+    },
+    "ThreatFox IP": {
+      "main": [[{"node": "Feodo Tracker", "type": "main", "index": 0}]]
+    },
+    "Feodo Tracker": {
+      "main": [[{"node": "OTX IP", "type": "main", "index": 0}]]
+    },
+    "OTX IP": {
+      "main": [[{"node": "MISP IP", "type": "main", "index": 0}]]
+    },
+    "MISP IP": {
+      "main": [[{"node": "Normalise Enrichment", "type": "main", "index": 0}]]
+    },
+    "MalwareBazaar": {
+      "main": [[{"node": "ThreatFox Hash", "type": "main", "index": 0}]]
+    },
+    "ThreatFox Hash": {
+      "main": [[{"node": "OTX Hash", "type": "main", "index": 0}]]
+    },
+    "OTX Hash": {
+      "main": [[{"node": "MISP Hash", "type": "main", "index": 0}]]
+    },
+    "MISP Hash": {
+      "main": [[{"node": "Normalise Enrichment", "type": "main", "index": 1}]]
+    },
+    "URLhaus": {
+      "main": [[{"node": "ThreatFox Domain", "type": "main", "index": 0}]]
+    },
+    "ThreatFox Domain": {
+      "main": [[{"node": "OTX Domain", "type": "main", "index": 0}]]
+    },
+    "OTX Domain": {
+      "main": [[{"node": "MISP Domain", "type": "main", "index": 0}]]
+    },
+    "MISP Domain": {
+      "main": [[{"node": "Normalise Enrichment", "type": "main", "index": 2}]]
+    }
+  },
+
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

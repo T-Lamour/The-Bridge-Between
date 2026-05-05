@@ -34,7 +34,7 @@ n8n sits between detection and response:
         │
         ├──────────────► DFIR IRIS (Incident Creation)
         │
-        ├──────────────► pfSense (IP Blocking)
+        ├──────────────► OPNsense (IP Blocking)
         │
         └──────────────► Microsoft Entra (User Response)
 ```
@@ -104,7 +104,7 @@ Examples:
 
 Depending on severity, n8n can trigger actions such as:
 
-* Blocking IP addresses via pfSense
+* Blocking IP addresses via OPNsense
 * Disabling user accounts in Microsoft Entra
 * Revoking active user sessions
 * Updating MISP with new indicators
@@ -127,7 +127,7 @@ A user successfully logs in from an IP flagged as malicious.
 
    * Disables user account (Microsoft Entra)
    * Revokes active sessions
-   * Blocks IP via pfSense
+   * Blocks IP via OPNsense
    * Creates incident in DFIR IRIS
 
 This reduces response time from minutes to seconds.
@@ -207,7 +207,7 @@ It bridges the gap between:
 
 * Detection (Wazuh)
 * Intelligence (MISP, VirusTotal, AbuseIPDB)
-* Response (pfSense, Microsoft Entra, DFIR IRIS)
+* Response (OPNsense, Microsoft Entra, DFIR IRIS)
 
 This enables a fully automated, efficient, and scalable security operations workflow.
 

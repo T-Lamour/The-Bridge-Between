@@ -1,0 +1,276 @@
+{
+  "name": "SOC - Wazuh to IRIS",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wazuh-alerts",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "main-01",
+      "name": "Wazuh Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "wazuh-alerts"
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "filt-01",
+              "leftValue": "={{ $json.body.rule.level }}",
+              "rightValue": 7,
+              "operator": {"type": "number", "operation": "gte"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "main-02",
+      "name": "Filter: Level >= 7",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [460, 300]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "disc-01", "name": "discarded", "value": true, "type": "boolean"},
+            {"id": "disc-02", "name": "rule_level", "value": "={{ $json.body.rule.level }}", "type": "number"},
+            {"id": "disc-03", "name": "reason", "value": "Alert level below threshold (< 7)", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "main-03",
+      "name": "Discard: Below Threshold",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 460]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ef-01",
+              "name": "alert",
+              "value": "={{ $json.body }}",
+              "type": "object"
+            },
+            {
+              "id": "ef-02",
+              "name": "ioc_value",
+              "value": "={{ $json.body.syscheck?.sha256_after ?? $json.body.data?.suricata?.dest_ip ?? $json.body.data?.azure?.signinlogs?.ipAddress ?? $json.body.data?.srcip ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "ef-03",
+              "name": "ioc_type_id",
+              "value": "={{ $json.body.syscheck?.sha256_after ? 113 : 76 }}",
+              "type": "number"
+            },
+            {
+              "id": "ef-04",
+              "name": "rule_id",
+              "value": "={{ $json.body.rule?.id ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "ef-05",
+              "name": "user_upn",
+              "value": "={{ $json.body.data?.azure?.signinlogs?.userPrincipalName ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "ef-06",
+              "name": "agent_id",
+              "value": "={{ $json.body.agent?.id ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "ef-07",
+              "name": "agent_name",
+              "value": "={{ $json.body.agent?.name ?? 'unknown' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "main-04",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 300]
+    },
+
+    {
+      "parameters": {
+        "workflowId": {"__rl": true, "value": "SOC - IOC Enrichment", "mode": "name"},
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ioc_value": "={{ $json.ioc_value }}",
+            "ioc_type_id": "={{ $json.ioc_type_id }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "main-05",
+      "name": "IOC Enrichment",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [900, 300]
+    },
+
+    {
+      "parameters": {
+        "jsCode": "const alert    = $('Edit Fields').first()?.json?.alert ?? {};\nconst fields   = $('Edit Fields').first()?.json ?? {};\nconst enr      = $json.enrichment ?? {};\nconst summary  = enr.summary ?? {};\n\nconst rule_id    = String(fields.rule_id ?? alert.rule?.id ?? '');\nconst rule_level = Number(alert.rule?.level ?? 0);\nconst rule_desc  = alert.rule?.description ?? 'Security Alert';\nconst agent_name = fields.agent_name ?? alert.agent?.name ?? 'unknown';\nconst ioc_value  = fields.ioc_value ?? '';\nconst timestamp  = alert.timestamp ?? new Date().toISOString();\n\n// Rule-specific mappings keyed by Wazuh rule ID\nconst ruleMap = {\n  '60106': {\n    title: `Brute Force — ${ioc_value} → ${agent_name}`,\n    ioc_type_id: 76,\n    ioc_label: 'Brute Force Source IP',\n    classification_id: 4,\n    asset_type_id: 9,\n    extra_context: 'Multiple failed authentication attempts'\n  },\n  '91530': {\n    title: `Suspicious Login — ${ioc_value} → ${agent_name}`,\n    ioc_type_id: 76,\n    ioc_label: 'Suspicious Login Source IP',\n    classification_id: 2,\n    asset_type_id: 9,\n    extra_context: 'Credential stuffing or suspicious authentication'\n  },\n  '87105': {\n    title: `Malicious File — ${ioc_value.slice(0, 16)}… on ${agent_name}`,\n    ioc_type_id: 113,\n    ioc_label: 'Malicious File Hash (SHA256)',\n    classification_id: 6,\n    asset_type_id: 9,\n    extra_context: 'FIM detected a file matching known malware hash'\n  },\n  '86601': {\n    title: `C2 Beaconing — ${ioc_value} from ${agent_name}`,\n    ioc_type_id: 76,\n    ioc_label: 'C2 Destination IP',\n    classification_id: 5,\n    asset_type_id: 9,\n    extra_context: 'Suricata IDS detected C2 beaconing pattern'\n  }\n};\n\nconst m = ruleMap[rule_id] ?? {\n  title: `Security Alert — Rule ${rule_id} — ${agent_name}`,\n  ioc_type_id: fields.ioc_type_id ?? 76,\n  ioc_label: 'IOC',\n  classification_id: 1,\n  asset_type_id: 9,\n  extra_context: rule_desc\n};\n\n// Map Wazuh level to IRIS severity (1–6)\nconst lvlSeverity = [[15,6],[12,5],[10,4],[8,3],[7,2],[0,1]];\nlet severity_id = lvlSeverity.find(([min]) => rule_level >= min)?.[1] ?? 1;\nif (summary.verdict === 'MALICIOUS') severity_id = Math.min(severity_id + 1, 6);\n\nconst verdict     = summary.verdict ?? 'UNKNOWN';\nconst confidence  = summary.confidence_pct ?? 0;\nconst flagged_by  = (summary.flagged_by ?? []).join(', ') || 'none';\nconst mitre_ids   = (alert.rule?.mitre?.id ?? []).join(', ');\nconst mitre_techs = (alert.rule?.mitre?.technique ?? []).join(', ');\n\nconst description =\n  `## Automated Alert — Wazuh Rule ${rule_id}\\n\\n` +\n  `**Agent:** ${agent_name}  \\n` +\n  `**Rule:** ${rule_desc} (Level ${rule_level})  \\n` +\n  `**IOC:** \\`${ioc_value}\\`  \\n` +\n  `**Timestamp:** ${timestamp}\\n\\n` +\n  (mitre_ids ? `**MITRE ATT&CK:** ${mitre_techs} (${mitre_ids})\\n\\n` : '') +\n  `---\\n\\n## Enrichment Summary\\n\\n` +\n  `| Field | Value |\\n|---|---|\\n` +\n  `| Verdict | **${verdict}** |\\n` +\n  `| Confidence | ${confidence}% |\\n` +\n  `| Flagged By | ${flagged_by} |\\n\\n` +\n  (m.extra_context ? `**Context:** ${m.extra_context}` : '');\n\nreturn [{\n  json: {\n    // IRIS alert fields\n    alert_title: m.title,\n    alert_description: description,\n    alert_severity_id: severity_id,\n    alert_status_id: 2,\n    alert_source: 'Wazuh',\n    alert_source_ref: alert.id ?? `WZ-${rule_id}-${Date.now()}`,\n    alert_source_link: '',\n    alert_source_event_time: timestamp,\n    alert_note: '',\n    alert_tags: `rule-${rule_id},wazuh,automated`,\n    alert_customer_id: 1,\n    alert_classification_id: m.classification_id,\n    alert_iocs: [{\n      ioc_value: ioc_value,\n      ioc_type_id: m.ioc_type_id,\n      ioc_tlp_id: 2,\n      ioc_description: `${m.ioc_label} — Verdict: ${verdict} (${confidence}%)`,\n      ioc_tags: `${verdict.toLowerCase()},rule-${rule_id}`\n    }],\n    alert_assets: [{\n      asset_name: agent_name,\n      asset_type_id: m.asset_type_id,\n      asset_ip: alert.agent?.ip ?? '',\n      asset_description: `Wazuh agent ID ${alert.agent?.id ?? 'unknown'}`\n    }],\n    // Pass-through for downstream nodes (prefixed to avoid IRIS field conflicts)\n    _ioc_value: ioc_value,\n    _ioc_type_id: m.ioc_type_id,\n    _verdict: verdict,\n    _user_upn: fields.user_upn ?? '',\n    _agent_id: fields.agent_id ?? '',\n    _agent_name: agent_name\n  }\n}];"
+      },
+      "id": "main-06",
+      "name": "Build IRIS Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $env.IRIS_HOST }}/api/v1/alerts/add",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  alert_title: $json.alert_title,\n  alert_description: $json.alert_description,\n  alert_severity_id: $json.alert_severity_id,\n  alert_status_id: $json.alert_status_id,\n  alert_source: $json.alert_source,\n  alert_source_ref: $json.alert_source_ref,\n  alert_source_link: $json.alert_source_link,\n  alert_source_event_time: $json.alert_source_event_time,\n  alert_note: $json.alert_note,\n  alert_tags: $json.alert_tags,\n  alert_customer_id: $json.alert_customer_id,\n  alert_classification_id: $json.alert_classification_id,\n  alert_iocs: $json.alert_iocs,\n  alert_assets: $json.alert_assets\n}) }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {"response": {"neverError": true}}
+        }
+      },
+      "id": "main-07",
+      "name": "Create IRIS Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 300],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {"id": "iris-api-cred", "name": "DFIR IRIS"}
+      }
+    },
+
+    {
+      "parameters": {
+        "workflowId": {"__rl": true, "value": "SOC - Response Actions", "mode": "name"},
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "iris_alert_id": "={{ $json.data?.alert_id ?? '' }}",
+            "ioc_value": "={{ $('Build IRIS Body').first().json._ioc_value }}",
+            "ioc_type_id": "={{ $('Build IRIS Body').first().json._ioc_type_id }}",
+            "verdict": "={{ $('Build IRIS Body').first().json._verdict }}",
+            "user_upn": "={{ $('Build IRIS Body').first().json._user_upn }}",
+            "agent_id": "={{ $('Build IRIS Body').first().json._agent_id }}",
+            "agent_name": "={{ $('Build IRIS Body').first().json._agent_name }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "main-08",
+      "name": "Trigger Response Actions",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [1560, 300]
+    },
+
+    {
+      "parameters": {},
+      "id": "main-09",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [240, 520]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "err-01", "name": "error_workflow", "value": "SOC - Wazuh to IRIS", "type": "string"},
+            {"id": "err-02", "name": "error_node", "value": "={{ $json.execution.error.node.name ?? 'unknown' }}", "type": "string"},
+            {"id": "err-03", "name": "error_message", "value": "={{ $json.execution.error.message ?? 'unknown error' }}", "type": "string"},
+            {"id": "err-04", "name": "error_time", "value": "={{ $now.toISO() }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "main-10",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 520]
+    }
+  ],
+
+  "connections": {
+    "Wazuh Webhook": {
+      "main": [
+        [{"node": "Filter: Level >= 7", "type": "main", "index": 0}]
+      ]
+    },
+    "Filter: Level >= 7": {
+      "main": [
+        [{"node": "Edit Fields", "type": "main", "index": 0}],
+        [{"node": "Discard: Below Threshold", "type": "main", "index": 0}]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [{"node": "IOC Enrichment", "type": "main", "index": 0}]
+      ]
+    },
+    "IOC Enrichment": {
+      "main": [
+        [{"node": "Build IRIS Body", "type": "main", "index": 0}]
+      ]
+    },
+    "Build IRIS Body": {
+      "main": [
+        [{"node": "Create IRIS Alert", "type": "main", "index": 0}]
+      ]
+    },
+    "Create IRIS Alert": {
+      "main": [
+        [{"node": "Trigger Response Actions", "type": "main", "index": 0}]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [{"node": "Log Error", "type": "main", "index": 0}]
+      ]
+    }
+  },
+
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": ""
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
