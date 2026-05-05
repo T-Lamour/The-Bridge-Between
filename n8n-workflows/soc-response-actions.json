@@ -1,0 +1,983 @@
+{
+  "name": "SOC - Response Actions",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "ra-node-01",
+      "name": "When Called",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "inp-01",
+              "name": "iris_alert_id",
+              "value": "={{ $input.first().json.iris_alert_id ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "inp-02",
+              "name": "ioc_value",
+              "value": "={{ $input.first().json.ioc_value ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "inp-03",
+              "name": "ioc_type_id",
+              "value": "={{ $input.first().json.ioc_type_id ?? 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "inp-04",
+              "name": "verdict",
+              "value": "={{ $input.first().json.verdict ?? 'UNKNOWN' }}",
+              "type": "string"
+            },
+            {
+              "id": "inp-05",
+              "name": "user_upn",
+              "value": "={{ $input.first().json.user_upn ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "inp-06",
+              "name": "agent_id",
+              "value": "={{ $input.first().json.agent_id ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "inp-07",
+              "name": "agent_name",
+              "value": "={{ $input.first().json.agent_name ?? '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ra-node-02",
+      "name": "Set Input Params",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-ip-01",
+              "leftValue": "={{ $json.ioc_type_id }}",
+              "rightValue": 76,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-ip-02",
+              "leftValue": "={{ $json.verdict }}",
+              "rightValue": "BENIGN",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "cond-ip-03",
+              "leftValue": "={{ $json.ioc_value }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ra-node-03",
+      "name": "IF: Block IP?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [680, 300]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $env.OPNSENSE_HOST }}/api/firewall/alias/addHost/blocklist_dynamic",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ address: $('Set Input Params').first().json.ioc_value }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ra-node-04",
+      "name": "OPNsense Add Host",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 180],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "opnsense-api-cred",
+          "name": "OPNsense API"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $env.OPNSENSE_HOST }}/api/firewall/alias/reconfigure",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ra-node-05",
+      "name": "OPNsense Reconfigure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 180],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "opnsense-api-cred",
+          "name": "OPNsense API"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ipb-t-01",
+              "name": "iris_alert_id",
+              "value": "={{ $('Set Input Params').first().json.iris_alert_id }}",
+              "type": "string"
+            },
+            {
+              "id": "ipb-t-02",
+              "name": "ioc_value",
+              "value": "={{ $('Set Input Params').first().json.ioc_value }}",
+              "type": "string"
+            },
+            {
+              "id": "ipb-t-03",
+              "name": "ioc_type_id",
+              "value": "={{ $('Set Input Params').first().json.ioc_type_id }}",
+              "type": "number"
+            },
+            {
+              "id": "ipb-t-04",
+              "name": "verdict",
+              "value": "={{ $('Set Input Params').first().json.verdict }}",
+              "type": "string"
+            },
+            {
+              "id": "ipb-t-05",
+              "name": "user_upn",
+              "value": "={{ $('Set Input Params').first().json.user_upn }}",
+              "type": "string"
+            },
+            {
+              "id": "ipb-t-06",
+              "name": "agent_id",
+              "value": "={{ $('Set Input Params').first().json.agent_id }}",
+              "type": "string"
+            },
+            {
+              "id": "ipb-t-07",
+              "name": "agent_name",
+              "value": "={{ $('Set Input Params').first().json.agent_name }}",
+              "type": "string"
+            },
+            {
+              "id": "ipb-t-08",
+              "name": "ip_blocked",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "ipb-t-09",
+              "name": "opnsense_status",
+              "value": "={{ $json.status ?? 'reconfigured' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ra-node-06",
+      "name": "Set IP Blocked True",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1340, 180]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ipb-f-01",
+              "name": "ip_blocked",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "ipb-f-02",
+              "name": "opnsense_status",
+              "value": "skipped",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "keepOnlySet": false
+        }
+      },
+      "id": "ra-node-07",
+      "name": "Set IP Blocked False",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 420]
+    },
+
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "ra-node-08",
+      "name": "Merge IP Block",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1560, 300]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-en-01",
+              "leftValue": "={{ $json.user_upn }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ra-node-09",
+      "name": "IF: Entra Response?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1780, 300]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://login.microsoftonline.com/{{ $env.ENTRA_TENANT_ID }}/oauth2/v2.0/token",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $env.ENTRA_CLIENT_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $env.ENTRA_CLIENT_SECRET }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://graph.microsoft.com/.default"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ra-node-10",
+      "name": "Get Entra Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 180],
+      "onError": "continueRegularOutput"
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.microsoft.com/v1.0/users/{{ $('Set Input Params').first().json.user_upn }}/revokeSignInSessions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get Entra Token').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ra-node-11",
+      "name": "Revoke Sign-In Sessions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2220, 180],
+      "onError": "continueRegularOutput"
+    },
+
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://graph.microsoft.com/v1.0/users/{{ $('Set Input Params').first().json.user_upn }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get Entra Token').first().json.access_token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"accountEnabled\": false }",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ra-node-12",
+      "name": "Disable Entra Account",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2440, 180],
+      "onError": "continueRegularOutput"
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ent-t-01",
+              "name": "iris_alert_id",
+              "value": "={{ $('Set Input Params').first().json.iris_alert_id }}",
+              "type": "string"
+            },
+            {
+              "id": "ent-t-02",
+              "name": "ioc_value",
+              "value": "={{ $('Set Input Params').first().json.ioc_value }}",
+              "type": "string"
+            },
+            {
+              "id": "ent-t-03",
+              "name": "ioc_type_id",
+              "value": "={{ $('Set Input Params').first().json.ioc_type_id }}",
+              "type": "number"
+            },
+            {
+              "id": "ent-t-04",
+              "name": "verdict",
+              "value": "={{ $('Set Input Params').first().json.verdict }}",
+              "type": "string"
+            },
+            {
+              "id": "ent-t-05",
+              "name": "user_upn",
+              "value": "={{ $('Set Input Params').first().json.user_upn }}",
+              "type": "string"
+            },
+            {
+              "id": "ent-t-06",
+              "name": "agent_id",
+              "value": "={{ $('Set Input Params').first().json.agent_id }}",
+              "type": "string"
+            },
+            {
+              "id": "ent-t-07",
+              "name": "agent_name",
+              "value": "={{ $('Set Input Params').first().json.agent_name }}",
+              "type": "string"
+            },
+            {
+              "id": "ent-t-08",
+              "name": "ip_blocked",
+              "value": "={{ $('Merge IP Block').first().json.ip_blocked }}",
+              "type": "boolean"
+            },
+            {
+              "id": "ent-t-09",
+              "name": "entra_done",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ra-node-13",
+      "name": "Set Entra Done True",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2660, 180]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ent-f-01",
+              "name": "entra_done",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {
+          "keepOnlySet": false
+        }
+      },
+      "id": "ra-node-14",
+      "name": "Set Entra Done False",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2000, 420]
+    },
+
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "ra-node-15",
+      "name": "Merge Entra",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [2880, 300]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-wz-01",
+              "leftValue": "={{ $json.agent_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "cond-wz-02",
+              "leftValue": "={{ $json.verdict }}",
+              "rightValue": "MALICIOUS",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ra-node-16",
+      "name": "IF: Wazuh Quarantine?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [3100, 300]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $env.WAZUH_HOST }}:55000/security/user/authenticate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBasicAuth",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ra-node-17",
+      "name": "Wazuh Auth",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3320, 180],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "wazuh-api-cred",
+          "name": "Wazuh API"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://{{ $env.WAZUH_HOST }}:55000/active-response",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "agents_list",
+              "value": "={{ $('Set Input Params').first().json.agent_id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Wazuh Auth').first().json.data.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ command: 'firewall-drop', alert: { data: { srcip: $('Set Input Params').first().json.ioc_value } } }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ra-node-18",
+      "name": "Wazuh Active Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3540, 180],
+      "onError": "continueRegularOutput"
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "wz-t-01",
+              "name": "iris_alert_id",
+              "value": "={{ $('Set Input Params').first().json.iris_alert_id }}",
+              "type": "string"
+            },
+            {
+              "id": "wz-t-02",
+              "name": "ioc_value",
+              "value": "={{ $('Set Input Params').first().json.ioc_value }}",
+              "type": "string"
+            },
+            {
+              "id": "wz-t-03",
+              "name": "ioc_type_id",
+              "value": "={{ $('Set Input Params').first().json.ioc_type_id }}",
+              "type": "number"
+            },
+            {
+              "id": "wz-t-04",
+              "name": "verdict",
+              "value": "={{ $('Set Input Params').first().json.verdict }}",
+              "type": "string"
+            },
+            {
+              "id": "wz-t-05",
+              "name": "user_upn",
+              "value": "={{ $('Set Input Params').first().json.user_upn }}",
+              "type": "string"
+            },
+            {
+              "id": "wz-t-06",
+              "name": "agent_id",
+              "value": "={{ $('Set Input Params').first().json.agent_id }}",
+              "type": "string"
+            },
+            {
+              "id": "wz-t-07",
+              "name": "agent_name",
+              "value": "={{ $('Set Input Params').first().json.agent_name }}",
+              "type": "string"
+            },
+            {
+              "id": "wz-t-08",
+              "name": "ip_blocked",
+              "value": "={{ $('Merge IP Block').first().json.ip_blocked }}",
+              "type": "boolean"
+            },
+            {
+              "id": "wz-t-09",
+              "name": "entra_done",
+              "value": "={{ $('Merge Entra').first().json.entra_done }}",
+              "type": "boolean"
+            },
+            {
+              "id": "wz-t-10",
+              "name": "wazuh_done",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ra-node-19",
+      "name": "Set Wazuh Done True",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3760, 180]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "wz-f-01",
+              "name": "wazuh_done",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {
+          "keepOnlySet": false
+        }
+      },
+      "id": "ra-node-20",
+      "name": "Set Wazuh Done False",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3320, 420]
+    },
+
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "ra-node-21",
+      "name": "Merge Wazuh",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [3980, 300]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "note-01",
+              "name": "iris_alert_id",
+              "value": "={{ $json.iris_alert_id }}",
+              "type": "string"
+            },
+            {
+              "id": "note-02",
+              "name": "alert_note",
+              "value": "=## SOC Automated Response\n\n**Verdict:** {{ $json.verdict }}  \n**IOC:** {{ $json.ioc_value }}\n\n---\n\n| Action | Result |\n|--------|--------|\n| OPNsense IP Block | {{ $json.ip_blocked ? 'Blocked' : 'Skipped' }} |\n| Entra Account Disable + Session Revoke | {{ $json.entra_done ? 'Completed' : 'Skipped' }} |\n| Wazuh Active Response (firewall-drop) | {{ $json.wazuh_done ? 'Sent' : 'Skipped' }} |\n\nResponded at: {{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ra-node-22",
+      "name": "Set Evidence Note",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [4200, 300]
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://{{ $env.IRIS_HOST }}/api/v1/alerts/update/{{ $json.iris_alert_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alert_note: $json.alert_note, alert_status_id: 3 }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ra-node-23",
+      "name": "Update IRIS Evidence Trail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4420, 300],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "iris-api-cred",
+          "name": "DFIR IRIS"
+        }
+      }
+    },
+
+    {
+      "parameters": {},
+      "id": "ra-node-24",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [240, 560]
+    },
+
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "err-01",
+              "name": "error_workflow",
+              "value": "SOC - Response Actions",
+              "type": "string"
+            },
+            {
+              "id": "err-02",
+              "name": "error_node",
+              "value": "={{ $json.execution.error.node.name ?? 'unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "err-03",
+              "name": "error_message",
+              "value": "={{ $json.execution.error.message ?? 'unknown error' }}",
+              "type": "string"
+            },
+            {
+              "id": "err-04",
+              "name": "error_time",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ra-node-25",
+      "name": "Log Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 560]
+    }
+  ],
+
+  "connections": {
+    "When Called": {
+      "main": [
+        [{"node": "Set Input Params", "type": "main", "index": 0}]
+      ]
+    },
+    "Set Input Params": {
+      "main": [
+        [{"node": "IF: Block IP?", "type": "main", "index": 0}]
+      ]
+    },
+    "IF: Block IP?": {
+      "main": [
+        [{"node": "OPNsense Add Host", "type": "main", "index": 0}],
+        [{"node": "Set IP Blocked False", "type": "main", "index": 0}]
+      ]
+    },
+    "OPNsense Add Host": {
+      "main": [
+        [{"node": "OPNsense Reconfigure", "type": "main", "index": 0}]
+      ]
+    },
+    "OPNsense Reconfigure": {
+      "main": [
+        [{"node": "Set IP Blocked True", "type": "main", "index": 0}]
+      ]
+    },
+    "Set IP Blocked True": {
+      "main": [
+        [{"node": "Merge IP Block", "type": "main", "index": 0}]
+      ]
+    },
+    "Set IP Blocked False": {
+      "main": [
+        [{"node": "Merge IP Block", "type": "main", "index": 1}]
+      ]
+    },
+    "Merge IP Block": {
+      "main": [
+        [{"node": "IF: Entra Response?", "type": "main", "index": 0}]
+      ]
+    },
+    "IF: Entra Response?": {
+      "main": [
+        [{"node": "Get Entra Token", "type": "main", "index": 0}],
+        [{"node": "Set Entra Done False", "type": "main", "index": 0}]
+      ]
+    },
+    "Get Entra Token": {
+      "main": [
+        [{"node": "Revoke Sign-In Sessions", "type": "main", "index": 0}]
+      ]
+    },
+    "Revoke Sign-In Sessions": {
+      "main": [
+        [{"node": "Disable Entra Account", "type": "main", "index": 0}]
+      ]
+    },
+    "Disable Entra Account": {
+      "main": [
+        [{"node": "Set Entra Done True", "type": "main", "index": 0}]
+      ]
+    },
+    "Set Entra Done True": {
+      "main": [
+        [{"node": "Merge Entra", "type": "main", "index": 0}]
+      ]
+    },
+    "Set Entra Done False": {
+      "main": [
+        [{"node": "Merge Entra", "type": "main", "index": 1}]
+      ]
+    },
+    "Merge Entra": {
+      "main": [
+        [{"node": "IF: Wazuh Quarantine?", "type": "main", "index": 0}]
+      ]
+    },
+    "IF: Wazuh Quarantine?": {
+      "main": [
+        [{"node": "Wazuh Auth", "type": "main", "index": 0}],
+        [{"node": "Set Wazuh Done False", "type": "main", "index": 0}]
+      ]
+    },
+    "Wazuh Auth": {
+      "main": [
+        [{"node": "Wazuh Active Response", "type": "main", "index": 0}]
+      ]
+    },
+    "Wazuh Active Response": {
+      "main": [
+        [{"node": "Set Wazuh Done True", "type": "main", "index": 0}]
+      ]
+    },
+    "Set Wazuh Done True": {
+      "main": [
+        [{"node": "Merge Wazuh", "type": "main", "index": 0}]
+      ]
+    },
+    "Set Wazuh Done False": {
+      "main": [
+        [{"node": "Merge Wazuh", "type": "main", "index": 1}]
+      ]
+    },
+    "Merge Wazuh": {
+      "main": [
+        [{"node": "Set Evidence Note", "type": "main", "index": 0}]
+      ]
+    },
+    "Set Evidence Note": {
+      "main": [
+        [{"node": "Update IRIS Evidence Trail", "type": "main", "index": 0}]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [{"node": "Log Error", "type": "main", "index": 0}]
+      ]
+    }
+  },
+
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": ""
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
