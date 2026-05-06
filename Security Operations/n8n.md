@@ -16,9 +16,11 @@ Its primary role is to reduce manual investigation effort by enriching alerts, a
 
 * Ingest alerts from Wazuh via webhook
 * Enrich alerts with threat intelligence
+* Call Claude AI to triage alerts with business context and generate analyst-ready output
 * Apply decision logic to determine severity and response
-* Automate incident creation in DFIR IRIS
+* Automate incident creation in DFIR IRIS with Claude-drafted case descriptions
 * Trigger response actions (e.g. blocking IPs, disabling accounts)
+* Send plain-English client notifications to SMB owners for HIGH/CRITICAL alerts
 
 ---
 
@@ -96,14 +98,34 @@ Based on enrichment results, each indicator is classified as:
 
 ---
 
+### 3.5. Claude AI Triage
+
+After enrichment, n8n calls the **Claude API** (Anthropic) to assess the alert in context. Claude receives the full enrichment output alongside the client's business profile and returns a structured verdict:
+
+* **Severity rating** — `CRITICAL / HIGH / MEDIUM / LOW / FP`
+* **Triage summary** — 2–3 sentences for the analyst explaining the verdict
+* **Client notification** — plain-English sentence for the SMB owner, no jargon
+* **Analyst notes** — what to investigate next, lateral movement risk, persistence indicators
+* **Recommended actions** — ordered list of concrete next steps
+
+This replaces hardcoded threshold logic (e.g. `IF abuseConfidenceScore > 50`) with reasoning that accounts for combinations of weak signals, business context, and false positive patterns.
+
+Each SMB client has a profile in n8n (business type, headcount, critical assets). Claude uses this to calibrate impact — a brute force against an accounting firm's finance server is rated differently from one against a test VM.
+
+IRIS cases are created with Claude's triage summary and analyst notes pre-populated, so analysts open a structured investigation starting point rather than raw JSON.
+
+See [claude-ai-triage.md](claude-ai-triage.md) for operational reference and [Deployment/07-claude-ai-triage.md](../Deployment/07-claude-ai-triage.md) for setup instructions.
+
+---
+
 ### 4. Decision Logic
 
-Conditional (IF) nodes evaluate enriched data and route the alert to the appropriate action:
+Conditional (IF) nodes evaluate Claude's verdict and route the alert to the appropriate action:
 
-* If IP is confirmed malicious → escalate severity, trigger response
-* If login is successful from a malicious IP → disable account and revoke sessions
-* If score is below threshold → log and close without action
-* If false positive indicators are present → downgrade and close the alert
+* If Claude rates `CRITICAL` or `HIGH` → trigger automated response
+* If Claude rates `MEDIUM` → create IRIS case for analyst review, no automated block
+* If Claude rates `LOW` → log only; include in weekly client digest
+* If Claude rates `FP` → discard with reasoning logged
 
 *Add screenshot here – IF node branching logic within the workflow*
 
