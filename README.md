@@ -49,6 +49,14 @@ Each tool runs as a Docker Compose stack on its own VM. Reasoning: [Deployment/0
 
 ---
 
+## SOC Dashboard
+
+![SOC Dashboard](assets/Spirit-Bridge-dashboard.png)
+
+A single-pane dashboard for quick access to every tool in the stack. If you want a simpler, ready-made alternative, [Homepage](https://gethomepage.dev) is a lightweight self-hosted dashboard that integrates with most of the stack out of the box and deploys as an additional Docker Compose service.
+
+---
+
 ## Cost Comparison
 
 | Solution | Cost | What You Get |
@@ -82,7 +90,7 @@ Estimated deployment time: a weekend, assuming prerequisites are in place.
 
 * **End-to-end SOC pipeline** — detection to enriched incident in under 15 seconds
 * **Real automation** — n8n actively blocks IPs via OPNsense, disables accounts via Entra, and revokes sessions; not just "sends an email"
-* **Threat intel integration** — VirusTotal, AbuseIPDB, and MISP all feed enrichment decisions before any case is opened
+* **Threat intel integration** — AbuseIPDB, OTX AlienVault, abuse.ch (MalwareBazaar / ThreatFox), and MISP all feed enrichment decisions before any case is opened
 * **Infrastructure as code** — Ansible playbooks provision, patch, and harden the full stack; Proxmox cron handles VM snapshots for rollback
 * **Full-stack observability** — Prometheus scrapes every VM; Grafana surfaces infrastructure health and security telemetry side-by-side
 * **Compliance alignment** — full mapping to NIST CSF (all five functions) and ISO 27001 controls
@@ -96,7 +104,7 @@ Estimated deployment time: a weekend, assuming prerequisites are in place.
 | -------- | ------ | --------------- | -------------- |
 | [RDP Brute Force](Use-Cases/brute-force-attack.md) | Wazuh rule 60106 | T1110 | ~9 sec |
 | [Suspicious Login](Use-Cases/suspicious-login.md) | M365 / Entra | T1078, T1110.004 | ~11 sec |
-| [Malicious File Download](Use-Cases/malicious-file-download.md) | Wazuh FIM + VirusTotal | T1566.002, T1204.002 | ~14 sec |
+| [Malicious File Download](Use-Cases/malicious-file-download.md) | Wazuh FIM + abuse.ch MalwareBazaar | T1566.002, T1204.002 | ~14 sec |
 | [C2 Beaconing](Use-Cases/suspicious-network-traffic.md) | Suricata ET rules | T1071.001, T1571 | ~8 sec |
 
 ---
