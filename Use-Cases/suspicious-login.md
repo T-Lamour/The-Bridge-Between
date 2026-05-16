@@ -118,15 +118,24 @@ n8n extracts the following fields:
 }
 ```
 
-#### VirusTotal
+#### OTX AlienVault
 
 ```json
 {
-  "ip": "91.108.56.192",
-  "malicious": 8,
-  "suspicious": 2,
-  "harmless": 4,
-  "last_analysis_date": "2026-04-22T09:00:00Z"
+  "indicator": "91.108.56.192",
+  "type": "IPv4",
+  "pulse_info": {
+    "count": 7,
+    "pulses": [
+      { "name": "Credential Stuffing Infrastructure — M365", "tags": ["credential-stuffing", "microsoft-365"] },
+      { "name": "Bulletproof Hosting — Ukraine", "tags": ["bulletproof-hosting", "hosting-abuse"] }
+    ]
+  },
+  "general": {
+    "reputation": -1,
+    "country_code": "UA",
+    "asn": "AS209641 TimeWeb Ltd."
+  }
 }
 ```
 
@@ -154,7 +163,7 @@ n8n evaluates the enriched data:
 |---|---|
 | Login successful | True — active session exists |
 | AbuseIPDB score > 80 | True |
-| VirusTotal malicious > 5 | True |
+| OTX pulse count > 0 | True — 7 pulses linked to credential stuffing |
 | MISP match found | True (TLP:RED — credential stuffing) |
 | Country anomaly (non-UK login) | True |
 | MFA not used | True |
@@ -252,7 +261,7 @@ normal access patterns (UK-based, business hours). No MFA was enforced.
 
 ENRICHMENT SUMMARY:
 - AbuseIPDB Score: 84/100 (76 prior reports)
-- VirusTotal: 8 malicious vendor detections
+- OTX AlienVault: 7 threat intelligence pulses — credential stuffing, bulletproof hosting
 - MISP Match: Event #1058 — Credential Stuffing Campaign targeting M365 (TLP:RED)
 - Entra Risk Level: High
 
@@ -273,7 +282,7 @@ INVESTIGATION REQUIRED:
 
 | Type | Value | Source |
 |---|---|---|
-| IP Address | `91.108.56.192` | AbuseIPDB / VirusTotal / MISP |
+| IP Address | `91.108.56.192` | AbuseIPDB / OTX AlienVault / MISP |
 | User Account | `j.harrison@company.com` | Entra Sign-in Log |
 | Campaign | `Credential Stuffing — M365` | MISP Event #1058 |
 
@@ -295,7 +304,7 @@ INVESTIGATION REQUIRED:
 | Stage | Action | Result |
 |---|---|---|
 | Detection | Wazuh rule 91530 triggered | Alert generated on successful anomalous login |
-| Enrichment | AbuseIPDB / VirusTotal / MISP | IP linked to active credential stuffing campaign |
+| Enrichment | AbuseIPDB / OTX AlienVault / MISP | IP linked to active credential stuffing campaign |
 | Response | Sessions revoked | Attacker access terminated |
 | Response | Account disabled | Re-authentication prevented |
 | Response | OPNsense block | IP blocked at perimeter |

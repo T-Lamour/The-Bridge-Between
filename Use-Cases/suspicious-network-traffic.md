@@ -147,16 +147,26 @@ n8n extracts the following fields:
 }
 ```
 
-#### VirusTotal
+#### abuse.ch ThreatFox
 
 ```json
 {
-  "ip": "194.165.16.78",
-  "malicious": 19,
-  "suspicious": 4,
-  "harmless": 1,
-  "last_analysis_date": "2026-04-23T12:00:00Z",
-  "tags": ["c2", "meterpreter", "cobalt-strike"]
+  "query_status": "ok",
+  "data": [
+    {
+      "ioc": "194.165.16.78:4444",
+      "ioc_type": "ip:port",
+      "threat_type": "botnet_cc",
+      "threat_type_desc": "Botnet C2 server",
+      "malware": "Meterpreter",
+      "malware_printable": "Meterpreter",
+      "confidence_level": 90,
+      "reporter": "abuse_ch",
+      "first_seen": "2026-04-15 12:00:00 UTC",
+      "last_seen": "2026-04-23 11:48:00 UTC",
+      "tags": ["meterpreter", "c2", "post-exploitation", "cobalt-strike"]
+    }
+  ]
 }
 ```
 
@@ -195,7 +205,7 @@ n8n evaluates the enriched data:
 | Condition | Result |
 |---|---|
 | AbuseIPDB score > 80 | True — 91/100 |
-| VirusTotal malicious > 5 | True — 19 detections, tagged C2 |
+| ThreatFox C2 match | True — 90% confidence, Meterpreter botnet_cc |
 | MISP match — C2 infrastructure | True (TLP:RED) |
 | Suricata severity == 1 | True — highest priority |
 | Traffic pattern consistent with beaconing | True — 60s intervals, 22 minutes |
@@ -303,7 +313,7 @@ TIMELINE:
 
 ENRICHMENT SUMMARY:
 - AbuseIPDB Score: 91/100 (189 prior reports)
-- VirusTotal: 19 malicious detections — tagged as C2 / Meterpreter / Cobalt Strike
+- abuse.ch ThreatFox: 90% confidence — Meterpreter botnet C2 (194.165.16.78:4444), active since 2026-04-15
 - MISP Match: Event #1083 — Active C2 Infrastructure, April 2026 (TLP:RED)
 - Associated C2 domain: cdn-update.securehosting-nl.com
 
@@ -330,12 +340,12 @@ INVESTIGATION REQUIRED:
 
 | Type | Value | Source |
 |---|---|---|
-| C2 IP | `194.165.16.78` | AbuseIPDB / VirusTotal / MISP |
+| C2 IP | `194.165.16.78` | AbuseIPDB / abuse.ch ThreatFox / MISP |
 | C2 Port | `4444` | Suricata / MISP |
 | C2 Domain | `cdn-update.securehosting-nl.com` | MISP Event #1083 |
 | Affected Host | `DESKTOP-DEV04` (`10.0.2.31`) | OPNsense / Wazuh |
 | Affected User | `d.okonkwo@company.com` | Active session |
-| Malware Family | `Meterpreter / Cobalt Strike` | VirusTotal / MISP |
+| Malware Family | `Meterpreter / Cobalt Strike` | abuse.ch ThreatFox / MISP |
 
 ### Analyst Tasks (Auto-Generated)
 
@@ -357,7 +367,7 @@ INVESTIGATION REQUIRED:
 | Stage | Action | Result |
 |---|---|---|
 | Detection | Suricata (OPNsense) + Wazuh rule 86601 | Active C2 beacon identified |
-| Enrichment | AbuseIPDB / VirusTotal / MISP | Confirmed Meterpreter C2 infrastructure |
+| Enrichment | AbuseIPDB / abuse.ch ThreatFox / MISP | Confirmed Meterpreter C2 infrastructure |
 | Response | OPNsense — C2 IP block | Active attacker session terminated |
 | Response | OPNsense — C2 domain block | Re-establishment via DNS prevented |
 | Response | Entra account disabled | Credential reuse prevented |

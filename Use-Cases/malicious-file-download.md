@@ -34,11 +34,10 @@ Wazuh's **File Integrity Monitoring (FIM)** is configured to monitor the `Downlo
 |---|---|
 | **Rule ID** | `554` |
 | **Rule Description** | `File added to monitored directory` |
-| **Secondary Rule** | `87105` — `Wazuh-VirusTotal: File hash found in threat intelligence` |
 | **MITRE ATT&CK** | T1566.002 — Spearphishing Link, T1204.002 — Malicious File |
-| **Severity Level** | 12 (Critical) |
+| **Severity Level** | 7 (elevated — triggers n8n webhook) |
 
-Wazuh FIM captures the SHA256 hash of every new file in monitored directories. Rule `87105` fires when FIM hash lookup returns a positive match from the integrated VirusTotal module.
+Wazuh FIM captures the SHA256 hash of every new file in monitored directories and forwards the event to n8n via webhook. n8n performs the hash lookup against abuse.ch MalwareBazaar and makes the triage decision — this keeps the workflow entirely within the n8n credential store and removes the dependency on Wazuh's built-in VirusTotal module.
 
 ### Wazuh Alert Payload (JSON)
 
@@ -46,9 +45,9 @@ Wazuh FIM captures the SHA256 hash of every new file in monitored directories. R
 {
   "timestamp": "2026-04-23T10:22:07.334Z",
   "rule": {
-    "id": "87105",
-    "description": "Wazuh-VirusTotal: File hash found in threat intelligence",
-    "level": 12,
+    "id": "554",
+    "description": "File added to monitored directory",
+    "level": 7,
     "mitre": {
       "technique": ["T1566.002", "T1204.002"],
       "tactic": ["Initial Access", "Execution"]
@@ -67,15 +66,7 @@ Wazuh FIM captures the SHA256 hash of every new file in monitored directories. R
     "uname_after": "s.patel",
     "mtime_after": "2026-04-23T10:22:05Z"
   },
-  "data": {
-    "virustotal": {
-      "found": 1,
-      "positives": 54,
-      "total": 72,
-      "permalink": "https://www.virustotal.com/gui/file/4a8f2c1e..."
-    }
-  },
-  "full_log": "FIM: New file detected. Path: C:\\Users\\s.patel\\Downloads\\invoice_april_2026.exe. SHA256: 4a8f2c1e... VT Positives: 54/72"
+  "full_log": "FIM: New file detected. Path: C:\\Users\\s.patel\\Downloads\\invoice_april_2026.exe. SHA256: 4a8f2c1e9b3d6f0a7e5c2b9d1f4e8a3c6b0d5e2f9a7c4b1e8d3f6a0c5b2e9d7f"
 }
 ```
 
@@ -96,30 +87,35 @@ n8n extracts the following fields:
 - File name: `invoice_april_2026.exe`
 - Affected user: `s.patel`
 - Affected host: `DESKTOP-FIN02`
-- VirusTotal initial positives: `54/72`
 - Timestamp: `2026-04-23T10:22:07Z`
 
 ---
 
 ### Step 2 — Threat Intelligence Lookup
 
-#### VirusTotal (Full Hash Analysis)
+#### abuse.ch MalwareBazaar (Hash Lookup)
 
 ```json
 {
-  "sha256": "4a8f2c1e9b3d6f0a7e5c2b9d1f4e8a3c6b0d5e2f9a7c4b1e8d3f6a0c5b2e9d7f",
-  "meaningful_name": "invoice_april_2026.exe",
-  "type_description": "Win32 EXE",
-  "malicious": 54,
-  "suspicious": 6,
-  "harmless": 0,
-  "popular_threat_classification": {
-    "suggested_threat_label": "trojan.emotet/dropper",
-    "popular_threat_category": "trojan",
-    "popular_threat_name": "Emotet"
-  },
-  "first_submission_date": "2026-04-21T08:11:00Z",
-  "last_analysis_date": "2026-04-23T09:55:00Z"
+  "query_status": "ok",
+  "data": [
+    {
+      "sha256_hash": "4a8f2c1e9b3d6f0a7e5c2b9d1f4e8a3c6b0d5e2f9a7c4b1e8d3f6a0c5b2e9d7f",
+      "file_name": "invoice_april_2026.exe",
+      "file_type": "exe",
+      "file_size": 1258496,
+      "signature": "Emotet",
+      "tags": ["emotet", "dropper", "botnet", "phishing-invoice"],
+      "reporter": "abuse_ch",
+      "first_seen": "2026-04-21 08:11:00",
+      "last_seen": "2026-04-23 09:55:00",
+      "intelligence": {
+        "clamav": "Win.Trojan.Emotet-9876543-0",
+        "downloads": "312",
+        "uploads": "28"
+      }
+    }
+  ]
 }
 ```
 
@@ -157,7 +153,7 @@ n8n evaluates the enriched data:
 
 | Condition | Result |
 |---|---|
-| VirusTotal positives > 10 | True — 54/72 engines |
+| MalwareBazaar signature known | True — classified as Emotet dropper/botnet |
 | Malware family identified | True — Emotet (trojan/dropper) |
 | MISP match found | True — active campaign (TLP:AMBER) |
 | File in user-writable directory | True — `Downloads` folder |
@@ -262,7 +258,7 @@ FILE DETAILS:
 - Size: 1.2 MB
 
 ENRICHMENT SUMMARY:
-- VirusTotal: 54/72 malicious detections — classified as Emotet dropper (trojan)
+- abuse.ch MalwareBazaar: signature confirmed as Emotet dropper/botnet — 312 prior downloads observed
 - MISP Match: Event #1071 — Emotet Resurgence Campaign — April 2026 (TLP:AMBER)
 - Associated C2: 45.132.227.88
 - Delivery Domain: invoices-secure-docs.net
@@ -284,8 +280,8 @@ INVESTIGATION REQUIRED:
 
 | Type | Value | Source |
 |---|---|---|
-| SHA256 Hash | `4a8f2c1e...` | Wazuh FIM / VirusTotal / MISP |
-| Malware Family | `Emotet` | VirusTotal |
+| SHA256 Hash | `4a8f2c1e...` | Wazuh FIM / abuse.ch MalwareBazaar / MISP |
+| Malware Family | `Emotet` | abuse.ch MalwareBazaar |
 | C2 IP | `45.132.227.88` | MISP Event #1071 |
 | Phishing Domain | `invoices-secure-docs.net` | MISP Event #1071 |
 | Affected Host | `DESKTOP-FIN02` | Wazuh Agent |
@@ -309,7 +305,7 @@ INVESTIGATION REQUIRED:
 | Stage | Action | Result |
 |---|---|---|
 | Detection | Wazuh FIM + rule 87105 | Malicious file identified on write to disk |
-| Enrichment | VirusTotal / MISP | Confirmed Emotet, active campaign identified |
+| Enrichment | abuse.ch MalwareBazaar / MISP | Confirmed Emotet, active campaign identified |
 | Response | OPNsense — C2 block | Outbound C2 callback prevented |
 | Response | OPNsense — domain block | Other users protected from same download |
 | Response | Entra account disabled | User account locked pending investigation |

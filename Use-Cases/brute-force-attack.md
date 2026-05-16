@@ -110,15 +110,24 @@ n8n extracts the following fields from the Wazuh payload:
 }
 ```
 
-#### VirusTotal
+#### OTX AlienVault
 
 ```json
 {
-  "ip": "185.220.101.47",
-  "malicious": 14,
-  "suspicious": 3,
-  "harmless": 0,
-  "last_analysis_date": "2026-04-22T18:30:00Z"
+  "indicator": "185.220.101.47",
+  "type": "IPv4",
+  "pulse_info": {
+    "count": 11,
+    "pulses": [
+      { "name": "Tor Exit Nodes — Brute Force Activity", "tags": ["tor", "brute-force", "rdp"] },
+      { "name": "RDP Scanning Infrastructure — Eastern Europe", "tags": ["rdp", "scanning"] }
+    ]
+  },
+  "general": {
+    "reputation": -2,
+    "country_code": "RU",
+    "asn": "AS205100 F3 Netze e.V."
+  }
 }
 ```
 
@@ -145,7 +154,7 @@ n8n evaluates the enriched data:
 | Condition | Result |
 |---|---|
 | AbuseIPDB score > 80 | True — IP confirmed malicious |
-| VirusTotal malicious detections > 5 | True |
+| OTX pulse count > 0 | True — 11 threat intelligence pulses |
 | MISP match found | True |
 | Rule level >= 10 | True |
 
@@ -231,7 +240,7 @@ over a 4-minute window originating from 185.220.101.47.
 
 ENRICHMENT SUMMARY:
 - AbuseIPDB Score: 97/100 (312 prior reports, Tor Exit Node)
-- VirusTotal: 14 malicious vendor detections
+- OTX AlienVault: 11 threat intelligence pulses — tagged brute-force, rdp, tor
 - MISP Match: Event #1042 — RDP-Scanning Botnet, Eastern Europe (TLP:AMBER)
 
 AUTOMATED ACTIONS TAKEN:
@@ -249,7 +258,7 @@ INVESTIGATION REQUIRED:
 
 | Type | Value | Source |
 |---|---|---|
-| IP Address | `185.220.101.47` | AbuseIPDB / VirusTotal / MISP |
+| IP Address | `185.220.101.47` | AbuseIPDB / OTX AlienVault / MISP |
 | Hostname | `DESKTOP-HR01` | Wazuh Agent |
 | Username | `Administrator` | Windows Event Log |
 
@@ -268,7 +277,7 @@ INVESTIGATION REQUIRED:
 | Stage | Action | Result |
 |---|---|---|
 | Detection | Wazuh rule 60106 triggered | Alert generated within seconds |
-| Enrichment | AbuseIPDB / VirusTotal / MISP | IP confirmed malicious |
+| Enrichment | AbuseIPDB / OTX AlienVault / MISP | IP confirmed malicious |
 | Response | OPNsense block | Attack traffic dropped at perimeter |
 | Response | Entra account disabled | Target account protected |
 | Case Management | IRIS case created | Analyst assigned for review |

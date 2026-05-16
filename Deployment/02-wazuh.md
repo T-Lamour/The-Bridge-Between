@@ -16,7 +16,7 @@ Wazuh is the detection core of the stack. Everything else in the pipeline depend
 ## 1. Before You Begin
 
 * Ubuntu 22.04 VM at `10.10.10.10` with hostname `wazuh`
-* 4 vCPU and **at least 8 GB RAM** allocated — the Wazuh Indexer (OpenSearch) will silently crash below this threshold
+* 4 vCPU and **at least 16 GB RAM** allocated — the Wazuh Indexer (OpenSearch) will silently OOM-kill itself below this threshold; the dashboard loads but shows no alerts with no obvious error
 * 100 GB disk — Wazuh stores all indexed alert data locally
 * Docker Engine and Compose v2 installed from the official Docker apt repo
 * OPNsense syslog forwarding configured (covered in `01-opnsense.md`)
@@ -233,7 +233,7 @@ Wazuh ships with thousands of built-in rules covering common attack patterns. Th
 | Rule ID | Event | Severity |
 | ------- | ----- | -------- |
 | 60106 | Multiple authentication failures | 10 |
-| 87105 | Malicious file detected (VirusTotal match) | 12 |
+| 87105 | Malicious file detected (threat intelligence match) | 12 |
 | 100002 | Successful login from unusual location | 9 |
 | 5712 | SSH brute force attempt | 10 |
 
@@ -256,7 +256,7 @@ Navigate to **Management > Rules** and search each ID. If any are missing, they 
 
 ## 10. What's Next
 
-`03-n8n.md` — deploy the n8n SOAR engine on `10.10.10.20` and configure the Wazuh webhook integration that triggers automation workflows on new alerts.
+`03-n8n.md` — deploy the n8n SOAR engine on `10.10.10.30` and configure the Wazuh webhook integration that triggers automation workflows on new alerts.
 
 ---
 

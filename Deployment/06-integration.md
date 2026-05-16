@@ -21,8 +21,8 @@ Confirm the status of all five VMs before proceeding:
 | -- | -- | ----- |
 | OPNsense | 10.10.1.254 | Suricata running, syslog forwarding active |
 | Wazuh | 10.10.10.10 | All containers healthy, agent enrolled |
-| n8n | 10.10.10.20 | Container running, all 6 credentials saved |
-| MISP | 10.10.10.30 | Container running, feeds fetched, API key in n8n |
+| n8n | 10.10.10.30 | Container running, all 6 credentials saved |
+| MISP | 10.10.10.20 | Container running, feeds fetched, API key in n8n |
 | DFIR IRIS | 10.10.10.40 | Container running, customer created, API key in n8n |
 
 If any credential in n8n still shows an error icon, resolve it now. A failed API call mid-workflow will silently drop the case creation or IOC write without failing the entire workflow — the kind of subtle bug that is invisible until you look at IRIS and find it empty.
@@ -31,16 +31,18 @@ If any credential in n8n still shows an error icon, resolve it now. A failed API
 
 ## 2. Verify All Credentials
 
-In n8n, navigate to **Settings > Credentials**. For each credential, click the three-dot menu and select **Test**. All six must pass:
+In n8n, navigate to **Settings > Credentials**. For each credential, click the three-dot menu and select **Test**. All must pass:
 
 | Credential | Expected Test Result |
 | ---------- | -------------------- |
 | Wazuh API | `200 OK` from `https://10.10.10.10:55000/` |
-| VirusTotal | `200 OK` with quota info |
 | AbuseIPDB | `200 OK` with check result |
+| OTX AlienVault | `200 OK` with response object |
 | MISP | `200 OK` with response object |
 | DFIR IRIS | `200 OK` with `"status": "success"` |
 | OPNsense API | `200 OK` from OPNsense API |
+
+> **abuse.ch APIs** (MalwareBazaar, URLhaus, ThreatFox) are open and unauthenticated — no credential entry needed; test them with a manual HTTP Request node instead.
 
 Any failure here must be resolved before the integration workflow will function reliably.
 
@@ -61,9 +63,11 @@ Set (extract srcip, agent.name, timestamp, rule.description)
     │
     ├── HTTP Request → AbuseIPDB (confidence score, ISP, country)
     │
-    └── HTTP Request → VirusTotal (malicious detections, last analysis)
+    └── HTTP Request → OTX AlienVault (pulse count, threat tags, geo)
             │
-IF (AbuseIPDB confidence > 50 OR VirusTotal detections > 3)
+Merge (combine AbuseIPDB + OTX results)
+            │
+IF (AbuseIPDB confidence > 50 OR OTX pulse count > 0)
     │
     ├── HTTP Request → MISP (check existing IOCs for srcip)
     │
@@ -121,25 +125,25 @@ This prevents every low-severity Wazuh alert from triggering enrichment. Alerts 
 * Query parameters: `ipAddress={{ $json.srcip }}&maxAgeInDays=90&verbose`
 * Credential: `AbuseIPDB`
 
-#### Node 4b: VirusTotal Lookup
+#### Node 4b: OTX AlienVault Lookup
 
 * Type: HTTP Request
 * Method: GET
-* URL: `https://www.virustotal.com/api/v3/ip_addresses/{{ $json.srcip }}`
-* Credential: `VirusTotal`
+* URL: `https://otx.alienvault.com/api/v1/indicators/IPv4/{{ $json.srcip }}/general`
+* Credential: `OTX AlienVault`
 * Run in parallel with Node 4a using the **Merge** node after both complete
 
 #### Node 5: Merge Enrichment Results
 
 * Type: Merge
 * Mode: Merge By Index
-* This node combines the AbuseIPDB and VirusTotal responses into a single item
+* This node combines the AbuseIPDB and OTX AlienVault responses into a single item
 
 #### Node 6: Decision — Is it Malicious?
 
 * Type: IF
 * Condition A: `{{ $json.abuseipdb.data.abuseConfidenceScore }}` greater than `50`
-* OR Condition B: `{{ $json.virustotal.data.attributes.last_analysis_stats.malicious }}` greater than `3`
+* OR Condition B: `{{ $json.otx.pulse_info.count }}` greater than `0`
 
 If neither condition is met, the workflow ends and no case is created. Log the event to a Slack or email node if you want visibility on discarded alerts.
 
@@ -147,7 +151,7 @@ If neither condition is met, the workflow ends and no case is created. Log the e
 
 * Type: HTTP Request
 * Method: POST
-* URL: `https://10.10.10.30/attributes/restSearch`
+* URL: `https://10.10.10.20/attributes/restSearch`
 * Credential: `MISP`
 * Body (JSON):
 ```json
@@ -168,7 +172,7 @@ If neither condition is met, the workflow ends and no case is created. Log the e
 ```json
 {
   "case_name": "BRF-{{ $now.toFormat('yyyyMMdd-HHmm') }} - Brute Force from {{ $json.srcip }}",
-  "case_description": "Wazuh rule {{ $json.rule_id }} | Level {{ $json.rule_level }} | Agent: {{ $json.agent_name }}\n\nAbuseIPDB Confidence: {{ $json.abuseipdb.data.abuseConfidenceScore }}%\nVirusTotal Malicious: {{ $json.virustotal.data.attributes.last_analysis_stats.malicious }}\nCountry: {{ $json.abuseipdb.data.countryCode }}\nISP: {{ $json.abuseipdb.data.isp }}",
+  "case_description": "Wazuh rule {{ $json.rule_id }} | Level {{ $json.rule_level }} | Agent: {{ $json.agent_name }}\n\nAbuseIPDB Confidence: {{ $json.abuseipdb.data.abuseConfidenceScore }}%\nOTX Pulses: {{ $json.otx.pulse_info.count }}\nCountry: {{ $json.abuseipdb.data.countryCode }}\nISP: {{ $json.abuseipdb.data.isp }}",
   "case_customer": 1,
   "case_template_id": 1,
   "case_soc_id": "WZ-{{ $json.rule_id }}-{{ $now.toUnixInteger() }}"
@@ -189,7 +193,7 @@ Store the returned `case_id` from the response for the subsequent nodes.
   "ioc_value": "{{ $json.srcip }}",
   "ioc_type_id": 76,
   "ioc_tlp_id": 2,
-  "ioc_description": "Source IP from brute force alert. AbuseIPDB: {{ $json.abuseipdb.data.abuseConfidenceScore }}%",
+  "ioc_description": "Source IP from brute force alert. AbuseIPDB: {{ $json.abuseipdb.data.abuseConfidenceScore }}% | OTX pulses: {{ $json.otx.pulse_info.count }}",
   "cid": "{{ $('Create IRIS Case').item.json.data.case_id }}"
 }
 ```
@@ -217,7 +221,7 @@ IOC type ID 76 is `ip-src` in the default IRIS schema. Verify this in your insta
 
 * Type: IF → HTTP Request
 * Condition: `{{ $('Check MISP').item.json.response.Attribute.length }}` equals `0` (IOC not already in MISP)
-* If true, POST to `https://10.10.10.30/events/add`:
+* If true, POST to `https://10.10.10.20/events/add`:
 
 ```json
 {
@@ -287,7 +291,7 @@ Alternatively, use a tool like `hydra` against the SSH service on a test target 
 | T+0s | Failed logins generated on endpoint |
 | T+2s | Wazuh agent ships logs to Wazuh Manager |
 | T+3s | Wazuh rule 60106 fires, alert POSTed to n8n webhook |
-| T+4s | n8n workflow starts — AbuseIPDB and VirusTotal queries run |
+| T+4s | n8n workflow starts — AbuseIPDB and OTX AlienVault queries run in parallel |
 | T+6s | Enrichment results merged, decision node evaluates |
 | T+7s | IRIS case created |
 | T+8s | IOC and asset added to IRIS case |
@@ -323,10 +327,10 @@ The brute force workflow above is the base pattern. The other three use cases do
 
 | Use Case | Wazuh Rule | Primary Enrichment | Additional Action |
 | -------- | ---------- | ------------------ | ----------------- |
-| Brute Force | 60106 | AbuseIPDB, VirusTotal | OPNsense block |
-| Malicious File | 87105 | VirusTotal (file hash) | Agent isolation (Wazuh active response) |
-| Suspicious Login | 100002 | AbuseIPDB, Entra sign-in logs | Entra account disable |
-| C2 Beaconing | Suricata ET rules | VirusTotal (domain/IP) | OPNsense block + DNS sinkhole |
+| Brute Force | 60106 | AbuseIPDB, OTX AlienVault | OPNsense block |
+| Malicious File | 554 (FIM) | abuse.ch MalwareBazaar (file hash) | Agent isolation (Wazuh active response) |
+| Suspicious Login | 100002 | AbuseIPDB, OTX AlienVault, Entra sign-in logs | Entra account disable |
+| C2 Beaconing | Suricata ET rules | AbuseIPDB, abuse.ch ThreatFox (IP/domain) | OPNsense block + DNS sinkhole |
 
 Build each as a separate workflow in n8n, triggered by the same Webhook node but routed by the Filter node on `rule.id`.
 
@@ -350,7 +354,7 @@ A SOC that has never been tuned generates more noise than signal. After running 
 | Wazuh receiving alerts | Alert visible in Security Events |
 | n8n receiving Wazuh webhook | Execution log shows incoming payload |
 | AbuseIPDB enrichment working | Execution node shows confidence score |
-| VirusTotal enrichment working | Execution node shows detection count |
+| OTX AlienVault enrichment working | Execution node shows pulse count |
 | IRIS case created | Case visible with correct title and description |
 | IRIS IOC populated | IOC tab shows source IP |
 | IRIS asset populated | Asset tab shows affected endpoint |

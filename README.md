@@ -31,7 +31,7 @@ Enterprise SOCs run on six-figure tooling. SMBs run on antivirus and hope for th
 <table>
 <thead><tr><th>Tool</th><th>Role</th><th>Why</th></tr></thead>
 <tbody>
-<tr><td>OPNsense + Suricata</td><td>Firewall + IDS</td><td>Purpose-built firewall distro; Suricata adds deep packet inspection and ET Open signatures</td></tr>
+<tr><td>OPNsense</td><td>Firewall + IDS</td><td>Purpose-built firewall distro; Inbuilt Suricata adds deep packet inspection and ET Open signatures</td></tr>
 <tr><td>Wazuh</td><td>SIEM / XDR</td><td>Single agent covers log collection, FIM, vulnerability scanning, and rule-based detection</td></tr>
 <tr><td>n8n</td><td>SOAR automation</td><td>Self-hosted, code-optional workflow engine; integrates with every tool via REST</td></tr>
 <tr><td>MISP</td><td>Threat intelligence</td><td>Internal IOC database with feed ingestion; every confirmed indicator feeds future detections</td></tr>
@@ -55,9 +55,9 @@ Each tool runs as a Docker Compose stack on its own VM. Reasoning: [Deployment/0
 | -------- | ---- | ------------ |
 | MSSP "SIEM" subscription | £120k–£240k/year | Repackaged tooling + support |
 | Enterprise security stack | £20k–£100k+/year | Full ecosystem, if you can afford it |
-| **The Bridge Between** | **£0 licensing + ~£500 hardware (one-off)** | **Fully functional SOC stack** |
+| **The Bridge Between** | **£0 licensing** | **Fully functional SOC stack** |
 
-The hardware is a one-off purchase — a second-hand mini-PC (Lenovo M920q, HP EliteDesk, or similar) with 32–64 GB RAM. Everything else is free.
+The stack can run a a couple second-hand mini-PCs(Lenovo M920q, HP EliteDesk, Dell Optiplex) with 32–64 GB RAM. Everything else is free.
 
 ---
 
@@ -120,6 +120,6 @@ Estimated deployment time: a weekend, assuming prerequisites are in place.
 
 Built and maintained by **Tidjani Lamour**, Cyber Security Professional.
 
-[LinkedIn](#) | [Website](#) | [CV](#)
+[LinkedIn](#) | [Website](#)
 
 If this project is useful to you, star the repo.
