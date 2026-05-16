@@ -51,7 +51,7 @@ Each tool runs as a Docker Compose stack on its own VM. Reasoning: [Deployment/0
 
 ## SOC Dashboard
 
-![SOC Dashboard](assets/Spirit-Bridge-dashboard.png)
+<img src="assets/Spirit-Bridge-dashboard.png" width="750" alt="SOC Dashboard">
 
 A single-pane dashboard for quick access to every tool in the stack. If you want a simpler, ready-made alternative, [Homepage](https://gethomepage.dev) is a lightweight self-hosted dashboard that integrates with most of the stack out of the box and deploys as an additional Docker Compose service.
 
@@ -65,7 +65,7 @@ A single-pane dashboard for quick access to every tool in the stack. If you want
 | Enterprise security stack | £20k–£100k+/year | Full ecosystem, if you can afford it |
 | **The Bridge Between** | **£0 licensing** | **Fully functional SOC stack** |
 
-The stack can run a a couple second-hand mini-PCs(Lenovo M920q, HP EliteDesk, Dell Optiplex) with 32–64 GB RAM. Everything else is free.
+The stack can run a a couple second-hand mini-PCs (Lenovo M920q, HP EliteDesk, Dell Optiplex) with 32–64 GB RAM. Everything else is free.
 
 ---
 
