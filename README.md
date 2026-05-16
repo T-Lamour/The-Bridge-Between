@@ -51,7 +51,7 @@ Each tool runs as a Docker Compose stack on its own VM. Reasoning: [Deployment/0
 
 ## SOC Dashboard
 
-<img src="assets/Spirit-Bridge-dashboard.png" width="750" alt="SOC Dashboard">
+<p align="center"><img src="assets/Spirit-Bridge-dashboard.png" width="800" alt="SOC Dashboard"></p>
 
 A single-pane dashboard for quick access to every tool in the stack. If you want a simpler, ready-made alternative, [Homepage](https://gethomepage.dev) is a lightweight self-hosted dashboard that integrates with most of the stack out of the box and deploys as an additional Docker Compose service.
 
