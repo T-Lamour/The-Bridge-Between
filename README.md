@@ -36,6 +36,9 @@ Enterprise SOCs run on six-figure tooling. SMBs run on antivirus and hope for th
 <tr><td>n8n</td><td>SOAR automation</td><td>Self-hosted, code-optional workflow engine; integrates with every tool via REST</td></tr>
 <tr><td>MISP</td><td>Threat intelligence</td><td>Internal IOC database with feed ingestion; every confirmed indicator feeds future detections</td></tr>
 <tr><td>DFIR IRIS</td><td>Case management</td><td>Structured incident tracking from triage to closure, with timeline, assets, and IOC links</td></tr>
+<tr><td>Ansible</td><td>Configuration management / IaC</td><td>Agentless playbooks for provisioning, patching, and hardening — repeatable and version-controlled</td></tr>
+<tr><td>Prometheus</td><td>Metrics collection</td><td>Pull-based time-series database scraping CPU, memory, disk, and service health across every VM</td></tr>
+<tr><td>Grafana</td><td>Dashboards / visualisation</td><td>Turns raw Prometheus metrics into SOC-ready dashboards — infrastructure health and security telemetry side-by-side</td></tr>
 </tbody>
 </table>
 </td>
@@ -67,9 +70,9 @@ The hardware is a one-off purchase — a second-hand mini-PC (Lenovo M920q, HP E
 5. [04 — MISP](Deployment/04-misp.md) — threat intel platform, feed configuration, API key
 6. [05 — DFIR IRIS](Deployment/05-iris.md) — case management, customer setup, API key
 7. [06 — Integration](Deployment/06-integration.md) — end-to-end pipeline wiring and live test
-8. 07 — Dashboard *(coming soon)* — unified SOC overview across all tools
-9. 08 — Hardening *(coming soon)* — TLS, credential rotation, ufw tuning
-10. 09 — Patching *(coming soon)* — automated update and snapshot strategy
+8. 07 — Ansible *(coming soon)* — playbooks for provisioning, patching, and hardening
+9. 08 — Prometheus + Grafana *(coming soon)* — infrastructure metrics and SOC dashboards
+10. 09 — Hardening *(coming soon)* — TLS, credential rotation, ufw tuning
 
 Estimated deployment time: a weekend, assuming prerequisites are in place.
 
@@ -80,6 +83,8 @@ Estimated deployment time: a weekend, assuming prerequisites are in place.
 * **End-to-end SOC pipeline** — detection to enriched incident in under 15 seconds
 * **Real automation** — n8n actively blocks IPs via OPNsense, disables accounts via Entra, and revokes sessions; not just "sends an email"
 * **Threat intel integration** — VirusTotal, AbuseIPDB, and MISP all feed enrichment decisions before any case is opened
+* **Infrastructure as code** — Ansible playbooks provision, patch, and harden the full stack; Proxmox cron handles VM snapshots for rollback
+* **Full-stack observability** — Prometheus scrapes every VM; Grafana surfaces infrastructure health and security telemetry side-by-side
 * **Compliance alignment** — full mapping to NIST CSF (all five functions) and ISO 27001 controls
 * **Realistic use cases** — brute force, account compromise, malicious file download, and C2 beaconing; all fully documented with payloads and timelines
 
@@ -100,8 +105,9 @@ Estimated deployment time: a weekend, assuming prerequisites are in place.
 
 | Area | Improvement | Status |
 | ---- | ----------- | ------ |
-| Automation | Patching and snapshot automation | In progress |
-| Monitoring | Grafana + Prometheus for infrastructure metrics | Planned |
+| IaC | Ansible playbooks for provisioning, patching, and hardening | Complete |
+| IaC | Proxmox cron snapshot strategy for rollback | Complete |
+| Monitoring | Grafana + Prometheus for infrastructure metrics | Complete |
 | Compliance | CIS Benchmark checks via Wazuh SCA | Planned |
 | Metrics | MTTD / MTTR tracking dashboards | Planned |
 | Response | Automated endpoint isolation via Wazuh active response | Planned |
