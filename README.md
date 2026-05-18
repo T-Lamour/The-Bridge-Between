@@ -26,19 +26,19 @@ Enterprise SOCs run on six-figure tooling. SMBs run on antivirus and hope for th
 
 <table>
 <tr>
-<td><img src="Architecture/SIEM-Solution.png" width="500" alt="SOC Architecture"></td>
+<td><img src="Architecture/SIEM-Architecture.png" width="1000" alt="SOC Architecture"></td>
 <td>
 <table>
 <thead><tr><th>Tool</th><th>Role</th><th>Why</th></tr></thead>
 <tbody>
-<tr><td>OPNsense</td><td>Firewall + IDS</td><td>Purpose-built firewall distro; Inbuilt Suricata adds deep packet inspection and ET Open signatures</td></tr>
-<tr><td>Wazuh</td><td>SIEM / XDR</td><td>Single agent covers log collection, FIM, vulnerability scanning, and rule-based detection</td></tr>
-<tr><td>n8n</td><td>SOAR automation</td><td>Self-hosted, code-optional workflow engine; integrates with every tool via REST</td></tr>
-<tr><td>MISP</td><td>Threat intelligence</td><td>Internal IOC database with feed ingestion; every confirmed indicator feeds future detections</td></tr>
-<tr><td>DFIR IRIS</td><td>Case management</td><td>Structured incident tracking from triage to closure, with timeline, assets, and IOC links</td></tr>
-<tr><td>Ansible</td><td>Configuration management / IaC</td><td>Agentless playbooks for provisioning, patching, and hardening — repeatable and version-controlled</td></tr>
-<tr><td>Prometheus</td><td>Metrics collection</td><td>Pull-based time-series database scraping CPU, memory, disk, and service health across every VM</td></tr>
-<tr><td>Grafana</td><td>Dashboards / visualisation</td><td>Turns raw Prometheus metrics into SOC-ready dashboards — infrastructure health and security telemetry side-by-side</td></tr>
+<tr><td>OPNsense</td><td>Firewall + IPS</td><td>Purpose-built firewall with inbuilt Suricata rules</td></tr>
+<tr><td>Wazuh</td><td>SIEM / XDR</td><td>Log collection, FIM, vulnerability scanning, and rule-based detection</td></tr>
+<tr><td>n8n</td><td>SOAR automation</td><td>Workflow engine; integrates with every tool via REST</td></tr>
+<tr><td>MISP</td><td>Threat intelligence</td><td>Internal IOC database with feed ingestion</td></tr>
+<tr><td>DFIR IRIS</td><td>Case management</td><td>Incident tracking from triage to closure</td></tr>
+<tr><td>Ansible</td><td>Configuration management / IaC</td><td>Agentless playbooks for provisioning, patching, and hardening</td></tr>
+<tr><td>Prometheus</td><td>Metrics collection</td><td>Database scraping CPU, memory, disk, and service health across stack</td></tr>
+<tr><td>Grafana</td><td>Dashboards / visualisation</td><td>Turns Prometheus metrics into infrastructure health and security telemetry</td></tr>
 </tbody>
 </table>
 </td>
