@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\tjhax\\\\Documents\\\\spiritbridge\\\\The-Bridge-Between\" -Recurse -File)",
-      "Bash(Select-Object -ExpandProperty FullName)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(xxd)",
+      "Bash(git ls-tree *)"
     ]
   }
 }
