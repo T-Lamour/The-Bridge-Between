@@ -72,11 +72,11 @@ The stack can run a a couple second-hand mini-PCs (Lenovo M920q, HP EliteDesk, D
 5. [04 — MISP](Deployment/04-misp.md) — threat intel platform, feed configuration, API key
 6. [05 — DFIR IRIS](Deployment/05-iris.md) — case management, customer setup, API key
 7. [06 — Integration](Deployment/06-integration.md) — end-to-end pipeline wiring and live test
-8. 07 — Ansible *(coming soon)* — playbooks for provisioning, patching, and hardening
-9. 08 — Prometheus + Grafana *(coming soon)* — infrastructure metrics and SOC dashboards
-10. 09 — Hardening *(coming soon)* — TLS, credential rotation, ufw tuning
+8. [07 — Ansible](Deployment/07-ansible.md) — playbooks for provisioning, patching, and hardening
+9. [08 — Prometheus + Grafana](Deployment/08-prometheus-grafana.md) — infrastructure metrics and SOC dashboards
+10. [09 — Hardening](Deployment/09-hardening.md) — TLS, credential rotation, ufw tuning
 
-Estimated deployment time: a weekend, assuming prerequisites are in place.
+Estimated deployment time: a week, assuming prerequisites are in place.
 
 ---
 
@@ -122,6 +122,6 @@ Estimated deployment time: a weekend, assuming prerequisites are in place.
 
 Built and maintained by **Tidjani Lamour**, Cyber Security Professional.
 
-[LinkedIn](#) | [Website](#)
+[LinkedIn](www.linkedin.com/in/tidjani-lamour) | [Website](https://t-lamour.github.io/The-Bridge-Between/)
 
 If this project is useful to you, star the repo.
