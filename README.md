@@ -26,7 +26,7 @@ Enterprise SOCs run on six-figure tooling. SMBs run on antivirus and hope for th
 
 <table>
 <tr>
-<td><img src="assets/SIEM-Architecture.png" width="1000" alt="SOC Architecture"></td>
+<td><img src="Architecture/SIEM-Architecture.png" width="1000" alt="SOC Architecture"></td>
 <td>
 <table>
 <thead><tr><th>Tool</th><th>Role</th><th>Why</th></tr></thead>
