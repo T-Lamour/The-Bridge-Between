@@ -26,11 +26,9 @@ Enterprise SOCs run on six-figure tooling. SMBs run on antivirus and hope for th
 
 <table>
 <tr>
-<td><img src="Architecture/SIEM-Architecture.png" width="1000" alt="SOC Architecture"></td>
-<td>
-<table>
-<thead><tr><th>Tool</th><th>Role</th><th>Why</th></tr></thead>
-<tbody>
+<td rowspan="9"><img src="Architecture/SIEM-Architecture.png" width="1000" alt="SOC Architecture"></td>
+<th>Tool</th><th>Role</th><th>Why</th>
+</tr>
 <tr><td>OPNsense</td><td>Firewall + IPS</td><td>Purpose-built firewall with inbuilt Suricata rules</td></tr>
 <tr><td>Wazuh</td><td>SIEM / XDR</td><td>Log collection, FIM, vulnerability scanning, and rule-based detection</td></tr>
 <tr><td>n8n</td><td>SOAR automation</td><td>Workflow engine; integrates with every tool via REST</td></tr>
@@ -39,10 +37,6 @@ Enterprise SOCs run on six-figure tooling. SMBs run on antivirus and hope for th
 <tr><td>Ansible</td><td>Configuration management / IaC</td><td>Agentless playbooks for provisioning, patching, and hardening</td></tr>
 <tr><td>Prometheus</td><td>Metrics collection</td><td>Database scraping CPU, memory, disk, and service health across stack</td></tr>
 <tr><td>Grafana</td><td>Dashboards / visualisation</td><td>Turns Prometheus metrics into infrastructure health and security telemetry</td></tr>
-</tbody>
-</table>
-</td>
-</tr>
 </table>
 
 Each tool runs as a Docker Compose stack on its own VM. Reasoning: [Deployment/00-prerequisites.md](Deployment/00-prerequisites.md).
