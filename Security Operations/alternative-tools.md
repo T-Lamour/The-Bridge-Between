@@ -81,7 +81,7 @@ A log management platform with strong search, stream routing, and alerting.
 
 ### Current: n8n
 
-n8n is a self-hosted workflow automation engine with a visual editor. It handles Wazuh webhook ingestion, parallel enrichment via VirusTotal and AbuseIPDB, decision logic, IRIS case creation, and OPNsense IP blocking — all without writing code.
+n8n is a self-hosted workflow automation engine with a visual editor. It handles Wazuh webhook ingestion, parallel enrichment via AbuseIPDB, OTX AlienVault, and abuse.ch, decision logic, IRIS case creation, and OPNsense IP blocking — all without writing code.
 
 ### Alternative: Shuffle
 
@@ -175,7 +175,7 @@ A cloud-hosted community threat intelligence platform with a free API.
 * Less control than MISP — you can't push your own IOCs back in the same way
 * Useful as a supplementary enrichment source alongside MISP, not a full replacement
 
-**When to use:** As an additional enrichment API in n8n, queried in parallel with AbuseIPDB and VirusTotal. Adds breadth without replacing MISP's internal feedback loop.
+**When to use:** As a supplementary enrichment source alongside AbuseIPDB and MISP — already used in this stack. Adds community IOC breadth without replacing MISP's internal feedback loop.
 
 ---
 

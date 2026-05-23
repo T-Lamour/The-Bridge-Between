@@ -48,7 +48,7 @@ All incoming security data flows through Wazuh before being processed further.
 
 ## Infrastructure
 
-Wazuh runs on a dedicated **VMware Workstation VM**, deployed using **Docker**. The deployment includes:
+Wazuh runs on a dedicated **Proxmox 1 VM** (Ubuntu 22.04, `10.10.10.10`), deployed as a Docker Compose stack. The deployment includes:
 
 * **Wazuh Manager** – receives and processes logs from all agents
 * **Wazuh Indexer** – stores and indexes alert and log data
@@ -65,9 +65,9 @@ Wazuh agents are deployed across the following systems:
 | Workstation | Windows 10 | Active |
 | Server | Windows Server | Active |
 | Lab System | Linux | Active |
-| Firewall | OPNsense | Planned |
+| Firewall | OPNsense (syslog) | Active |
 
-OPNsense integration is planned to extend log collection to network-level events, including firewall rule matches and blocked connection attempts.
+OPNsense forwards Suricata alerts and firewall events to Wazuh via syslog (UDP 514) on `10.10.10.10:514`, providing network-layer visibility alongside endpoint telemetry.
 
 ---
 
@@ -84,7 +84,7 @@ Wazuh agents are deployed on monitored systems to forward logs to the Wazuh Mana
 * **Windows 10 / Windows Server** – Security event logs, authentication events, process creation (Sysmon)
 * **Linux** – Syslog, auth.log, audit logs
 * **Application logs** – Web servers and services where applicable
-* **Network events** – Planned via OPNsense agent integration
+* **Network events** – OPNsense syslog (firewall events, Suricata IDS alerts via UDP 514)
 
 ---
 

@@ -19,7 +19,7 @@ This mapping is a **technical demonstration**, not a certified ISMS. Formal cert
 **Implementation:**
 
 * MISP ingests threat intelligence feeds (CIRCL OSINT, abuse.ch Feodo Tracker, URLhaus, MalwareBazaar) on a daily schedule
-* n8n queries AbuseIPDB and VirusTotal for every alert's source IP, returning confidence scores and historical reports
+* n8n queries AbuseIPDB and OTX AlienVault for every alert's source IP, returning confidence scores and pulse counts; abuse.ch MalwareBazaar is queried for file hash lookups on FIM alerts
 * Confirmed IOCs from resolved incidents are written back to MISP, creating an internal threat database that improves over time
 
 **Outcome:** Every enrichment decision is informed by both external feeds and internal incident history.
@@ -35,7 +35,7 @@ This mapping is a **technical demonstration**, not a certified ISMS. Formal cert
 * OPNsense firewall rules enforce VLAN-level access control — VLAN 30 (Victim) cannot reach SOC tools on VLAN 20 except through permitted ports
 * SOC tool web interfaces are accessible only from VLAN 10 (Management)
 * Each tool uses separate credentials; no shared passwords across the stack
-* API keys are scoped — MISP API key is restricted to the n8n VM IP (`10.10.10.20`)
+* API keys are scoped — MISP API key is restricted to the n8n VM IP (`10.10.10.30`)
 
 ---
 

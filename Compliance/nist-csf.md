@@ -37,10 +37,10 @@ This mapping is intended for **educational and portfolio purposes** and does not
 | **Detect** | DE.AE-1: Network baseline established | Suricata ET Open signatures define expected traffic patterns |
 | | DE.AE-2: Detected events analysed | Wazuh correlates Suricata + endpoint logs; severity assigned |
 | | DE.AE-3: Event data aggregated | Wazuh Manager ingests agents + OPNsense syslog + Windows events |
-| | DE.AE-5: Incident alert thresholds established | n8n decision node: AbuseIPDB >50 OR VirusTotal >3 triggers response |
+| | DE.AE-5: Incident alert thresholds established | n8n decision node: AbuseIPDB >50 OR OTX pulse count >0 triggers response |
 | | DE.CM-1: Network monitored for attacks | Suricata on OPNsense — all interfaces, real-time inspection |
 | | DE.CM-3: Personnel activity monitored | Wazuh agent covers authentication, process execution, FIM |
-| | DE.CM-4: Malicious code detected | Wazuh FIM + VirusTotal hash lookup via n8n |
+| | DE.CM-4: Malicious code detected | Wazuh FIM + abuse.ch MalwareBazaar hash lookup via n8n |
 | | DE.CM-7: Unauthorised assets monitored | Wazuh agent enrolment; unenrolled hosts generate no telemetry |
 | **Respond** | RS.RP-1: Response plan executed | n8n workflow executes automatically on confirmed alerts |
 | | RS.AN-1: Notifications from detections investigated | DFIR IRIS case created per confirmed incident, assigned to analyst |
@@ -84,7 +84,7 @@ Wazuh correlates events from both layers and fires rules. Level 7+ alerts are fo
 
 n8n executes an automated response workflow on every confirmed-malicious alert. The workflow runs in under 15 seconds from alert receipt:
 
-1. Enrichment — AbuseIPDB confidence score and VirusTotal detection count retrieved in parallel
+1. Enrichment — AbuseIPDB confidence score and OTX AlienVault pulse count retrieved in parallel
 2. Decision — if confidence exceeds threshold, response proceeds
 3. MISP check — is this IOC already known?
 4. IRIS case created — with enrichment data, IOC, and affected asset attached

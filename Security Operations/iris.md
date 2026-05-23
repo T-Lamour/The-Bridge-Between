@@ -47,7 +47,7 @@ DFIR IRIS sits at the **end of the detection and enrichment pipeline**, where al
 
 ## Infrastructure
 
-DFIR IRIS runs on a dedicated **VMware Workstation VM** as a **Docker container**, accessed via its web interface for case management and analyst workflows.
+DFIR IRIS runs on a **Proxmox 2 LXC** (Ubuntu 22.04, `10.10.10.40`), deployed as a Docker Compose stack, accessed via its web interface for case management and analyst workflows.
 
 ---
 
@@ -58,7 +58,7 @@ Incidents are automatically created in IRIS via **n8n workflows**. When an alert
 ### Data Included at Creation:
 
 * Alert details from Wazuh (rule ID, level, description)
-* Enriched threat intelligence (VirusTotal, AbuseIPDB, MISP results)
+* Enriched threat intelligence (AbuseIPDB, OTX AlienVault, abuse.ch, MISP results)
 * Indicators of Compromise (IP addresses, domains, file hashes)
 * Event timeline and raw log metadata
 

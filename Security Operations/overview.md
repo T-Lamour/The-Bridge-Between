@@ -17,6 +17,9 @@ The SOC is built around the following tools:
 * **DFIR IRIS** – Incident response and case management
 * **MISP** – Threat intelligence platform
 * **OPNsense** – Network firewall and traffic control
+* **Ansible** – Agentless configuration management and IaC
+* **Prometheus** – Infrastructure metrics collection
+* **Grafana** – Dashboard and visualisation layer
 
 Each tool plays a specific role in the detection and response lifecycle.
 
@@ -24,17 +27,17 @@ Each tool plays a specific role in the detection and response lifecycle.
 
 ## Infrastructure
 
-The SOC is deployed in a home lab environment using **VMware Workstation**, with each tool running on a dedicated virtual machine. Tools are containerised using **Docker** within each VM, simplifying deployment, updates, and isolation.
+The SOC runs across two Proxmox hosts and a bare-metal OPNsense firewall. Heavier workloads (Wazuh, MISP) run as full VMs on Proxmox 1. Lighter services (n8n, IRIS, Grafana/Prometheus, Ansible) run as LXC containers on Proxmox 2. All tools are deployed as Docker Compose stacks.
 
-| Component | Deployment |
-|-----------|------------|
-| Wazuh | Dedicated VM (Docker) |
-| n8n | Dedicated VM (Docker) |
-| DFIR IRIS | Dedicated VM (Docker) |
-| MISP | Dedicated VM (Docker) |
-| OPNsense | Dedicated VM |
-
-> **Future:** Migration to physical servers is planned to improve performance and better reflect production SOC environments.
+| Component | Host | Type |
+|-----------|------|------|
+| Wazuh | Proxmox 1 | VM (Ubuntu 22.04) |
+| MISP | Proxmox 1 | VM (Ubuntu 22.04) |
+| n8n | Proxmox 2 | LXC (Ubuntu 22.04) |
+| DFIR IRIS | Proxmox 2 | LXC (Ubuntu 22.04) |
+| Grafana + Prometheus | Proxmox 2 | LXC (Ubuntu 22.04) |
+| Ansible | Proxmox 2 | LXC (Ubuntu 22.04) |
+| OPNsense | Bare metal | Native install |
 
 ---
 
@@ -46,7 +49,7 @@ Wazuh agents are deployed across the following systems:
 * Windows Server
 * Linux systems
 
-OPNsense integration is planned to extend log collection to network-level events such as firewall rule matches and blocked traffic.
+OPNsense forwards Suricata alerts and firewall events to Wazuh via syslog (UDP 514), extending log collection to the network layer.
 
 ---
 
@@ -140,5 +143,6 @@ For detailed configuration and implementation, see:
 * [iris.md](iris.md) – Incident response and case management
 * [misp.md](misp.md) – Threat intelligence and IOC management
 * [opnsense.md](opnsense.md) – Firewall and network control
+* [alternative-tools.md](alternative-tools.md) – Alternative open-source tools for each layer
 
 ---

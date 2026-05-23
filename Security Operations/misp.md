@@ -45,7 +45,7 @@ MISP is integrated into the SOC as a **reference point for enrichment**, queried
 
 ## Infrastructure
 
-MISP runs on a dedicated **VMware Workstation VM** as a **Docker container**, with its web interface used for feed management, IOC review, and event organisation.
+MISP runs on a dedicated **Proxmox 1 VM** (Ubuntu 22.04, `10.10.10.20`), deployed as a Docker Compose stack, with its web interface used for feed management, IOC review, and event organisation.
 
 ---
 
@@ -59,8 +59,6 @@ Feed types include:
 * Known C2 (Command and Control) infrastructure
 * Phishing and malware domain lists
 * File hashes associated with known malware families
-
-*Add screenshot here – MISP feed configuration view showing active feeds and last sync status*
 
 This continuous feed ingestion ensures that even a first-time encounter with a known threat is flagged immediately during the enrichment phase.
 
@@ -102,8 +100,6 @@ MISP is queried during the **n8n enrichment phase** for every alert processed.
    * Feed source and confidence level
    * Historical sightings count
 
-*Add screenshot here – MISP event overview showing IOC matches and associated threat context*
-
 ---
 
 ## Correlation & Detection
@@ -119,8 +115,6 @@ MISP enables correlation between current alerts and previously identified or fee
 * Automated response is triggered (IP block via OPNsense, account disable via Entra)
 
 This allows the SOC to react immediately to **known threats** without waiting for manual analysis.
-
-*Add screenshot here – MISP IOC detail view showing indicator value, tags, and related events*
 
 ---
 

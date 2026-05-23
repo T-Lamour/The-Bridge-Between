@@ -47,7 +47,7 @@ n8n sits between detection and response, acting as the central decision-making e
 
 ## Infrastructure
 
-n8n runs on a dedicated **VMware Workstation VM** as a **Docker container**, accessed via its web interface for workflow management, monitoring, and execution history.
+n8n runs on a **Proxmox 2 LXC** (Ubuntu 22.04, `10.10.10.30`), deployed as a Docker Compose stack, accessed via its web interface for workflow management, monitoring, and execution history.
 
 ---
 
@@ -82,8 +82,11 @@ n8n queries multiple threat intelligence sources in parallel to build context ar
 
 | Source | Data Retrieved |
 |--------|----------------|
-| **VirusTotal** | IP / URL / hash reputation and detection ratio |
 | **AbuseIPDB** | Abuse confidence score, country, ISP |
+| **OTX AlienVault** | IP / domain / hash / URL pulse count and threat tags |
+| **abuse.ch MalwareBazaar** | File hash reputation (used on FIM alerts) |
+| **abuse.ch URLhaus** | Malicious URL and domain lookup |
+| **abuse.ch ThreatFox** | General IOC lookup — IPs, domains, hashes, URLs |
 | **MISP** | Internal IOC match and associated threat context |
 
 Based on enrichment results, each indicator is classified as:
@@ -91,8 +94,6 @@ Based on enrichment results, each indicator is classified as:
 * **Malicious** – confirmed match or high confidence score
 * **Suspicious** – borderline score or partial IOC match
 * **Benign** – no matches, low risk score
-
-*Add screenshot here – enrichment workflow showing API call nodes to VirusTotal, AbuseIPDB, and MISP*
 
 ---
 
@@ -104,8 +105,6 @@ Conditional (IF) nodes evaluate enriched data and route the alert to the appropr
 * If login is successful from a malicious IP → disable account and revoke sessions
 * If score is below threshold → log and close without action
 * If false positive indicators are present → downgrade and close the alert
-
-*Add screenshot here – IF node branching logic within the workflow*
 
 ---
 
@@ -134,7 +133,6 @@ Depending on the classification, n8n executes one or more of the following respo
 * **Revoke active sessions** via Microsoft Graph API
 * **Add IOC to MISP** for reuse in future detections
 
-*Add screenshot here – response action nodes showing OPNsense block and Entra account disable*
 
 ---
 
@@ -149,7 +147,7 @@ A user successfully authenticates from an IP address with a high AbuseIPDB abuse
 
 1. Wazuh detects a successful login event and sends the alert to n8n via webhook
 2. n8n extracts the source IP from the alert payload
-3. VirusTotal and AbuseIPDB return a high-confidence malicious verdict
+3. AbuseIPDB and OTX AlienVault return a high-confidence malicious verdict in parallel
 4. MISP confirms the IP matches a known threat actor infrastructure indicator
 5. n8n automatically executes:
 
@@ -158,7 +156,7 @@ A user successfully authenticates from an IP address with a high AbuseIPDB abuse
    * Blocks the source IP on OPNsense
    * Creates a high-severity case in DFIR IRIS with full enrichment context
 
-Total automated response time: under 30 seconds from alert generation.
+Total automated response time: under 15 seconds from alert generation.
 
 ---
 
