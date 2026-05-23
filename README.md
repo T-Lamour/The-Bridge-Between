@@ -24,20 +24,20 @@ Enterprise SOCs run on six-figure tooling. SMBs run on antivirus and hope for th
 
 ## Architecture
 
-<table>
-<tr>
-<td rowspan="10"><img src="Architecture/SIEM-Architecture.png" width="1000" alt="SOC Architecture"></td>
-<th>Tool</th><th>Role</th><th>Why</th>
-</tr>
-<tr><td>OPNsense</td><td>Firewall + IPS</td><td>Purpose-built firewall with inbuilt Suricata rules</td></tr>
-<tr><td>Wazuh</td><td>SIEM / XDR</td><td>Log collection, rule-based detection and vulnerability scanning</td></tr>
-<tr><td>n8n</td><td>SOAR automation</td><td>Workflow engine; integrates with every tool via REST</td></tr>
-<tr><td>MISP</td><td>Threat intelligence</td><td>Internal IOC database with feed ingestion</td></tr>
-<tr><td>DFIR IRIS</td><td>Case management</td><td>Incident tracking from triage to closure</td></tr>
-<tr><td>Ansible</td><td>Configuration management / IaC</td><td>Agentless playbooks for provisioning and patching</td></tr>
-<tr><td>Prometheus</td><td>Metrics collection</td><td>Database scraping CPU, memory, disk, and service health</td></tr>
-<tr><td>Grafana</td><td>Dashboards / visualisation</td><td>Turns Prometheus metrics into infrastructure health and telemetry</td></tr>
-</table>
+<p align="center">
+  <img src="Architecture/SIEM-Architecture.png" width="900" alt="SOC Architecture">
+</p>
+
+| Tool | Role | Why |
+| ---- | ---- | --- |
+| OPNsense | Firewall + IPS | Purpose-built firewall with inbuilt Suricata rules |
+| Wazuh | SIEM / XDR | Log collection, rule-based detection and vulnerability scanning |
+| n8n | SOAR automation | Workflow engine; integrates with every tool via REST |
+| MISP | Threat intelligence | Internal IOC database with feed ingestion |
+| DFIR IRIS | Case management | Incident tracking from triage to closure |
+| Ansible | Configuration management / IaC | Agentless playbooks for provisioning and patching |
+| Prometheus | Metrics collection | Scrapes CPU, memory, disk, and service health |
+| Grafana | Dashboards / visualisation | Turns Prometheus metrics into infrastructure health and telemetry |
 
 Each tool runs as a Docker Compose stack on its own VM. Reasoning: [Deployment/00-prerequisites.md](Deployment/00-prerequisites.md).
 
